@@ -10,7 +10,7 @@ import com.vaadin.flow.router.Route;
 import com.vaadin.flow.router.RouteParameters;
 
 
-@Route("/:bookDirectory/:bookId")
+@Route("/:bookRoot/:bookDirectory/:book")
 public class SelectedBookView extends Div implements BeforeEnterObserver {
 
     final CloudflareR2Client cloudflareR2Client;
@@ -27,9 +27,10 @@ public class SelectedBookView extends Div implements BeforeEnterObserver {
     @Override
     public void beforeEnter(BeforeEnterEvent beforeEnterEvent) {
         RouteParameters bookId= beforeEnterEvent.getRouteParameters();
-        String book = bookId.get("bookId").orElse("");
+        String book = bookId.get("book").orElse("");
         String directory = bookId.get("bookDirectory").orElse("");
-        String bookKey = directory + "/" + book;
+        String bookRoot = bookId.get("bookRoot").orElse("");
+        String bookKey = bookRoot + "/" + directory + "/" + book;
         if(!cloudflareService.signedUrls.containsKey(bookKey)){
             cloudflareService.createPresignedurlBooks(bookKey);
             System.out.println(cloudflareService.signedUrls.get(bookKey));
