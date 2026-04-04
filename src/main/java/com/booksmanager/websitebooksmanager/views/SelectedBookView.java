@@ -2,6 +2,7 @@ package com.booksmanager.websitebooksmanager.views;
 
 import com.booksmanager.websitebooksmanager.CloudFlare.CloudFlareService;
 import com.booksmanager.websitebooksmanager.CloudFlare.CloudflareR2Client;
+import com.booksmanager.websitebooksmanager.CloudFlare.DataTypes;
 import com.vaadin.flow.component.html.Div;
 import com.vaadin.flow.component.html.IFrame;
 import com.vaadin.flow.router.BeforeEnterEvent;
@@ -31,16 +32,16 @@ public class SelectedBookView extends Div implements BeforeEnterObserver {
         String directory = bookId.get("bookDirectory").orElse("");
         String bookRoot = bookId.get("bookRoot").orElse("");
         String bookKey = bookRoot + "/" + directory + "/" + book;
-        if(!cloudflareService.signedUrls.containsKey(bookKey)){
-            cloudflareService.createPresignedurlBooks(bookKey);
-            System.out.println(cloudflareService.signedUrls.get(bookKey));
-        }
+        //if(!cloudflareService.signedUrls.containsKey(bookKey)){
+        //    cloudflareService.createPresignedurlBooks(bookKey, DataTypes.PDF);
+        //    System.out.println(cloudflareService.signedUrls.get(bookKey));
+        //}
 
         System.out.println("did not create a new key \n"+cloudflareService.signedUrls.get(bookKey));
         IFrame pdfFrame = new IFrame();
         pdfFrame.setWidth("100%");
         pdfFrame.setHeight("100%");
-        pdfFrame.getElement().setAttribute("src", cloudflareService.signedUrls.get(bookKey));
+        //pdfFrame.getElement().setAttribute("src", cloudflareService.signedUrls.get(bookKey));
         add(pdfFrame);
     }
 }

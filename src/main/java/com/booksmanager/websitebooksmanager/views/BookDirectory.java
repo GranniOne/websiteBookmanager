@@ -1,8 +1,39 @@
 package com.booksmanager.websitebooksmanager.views;
 
+import com.booksmanager.websitebooksmanager.CloudFlare.CloudflareR2Client;
+import com.vaadin.flow.component.UI;
+import com.vaadin.flow.component.button.Button;
 import com.vaadin.flow.component.html.Div;
+import com.vaadin.flow.router.BeforeEnterEvent;
+import com.vaadin.flow.router.BeforeEnterObserver;
 import com.vaadin.flow.router.Route;
+import com.vaadin.flow.router.RouteParameters;
 
-@Route("/books/:bookDirectory")
-public class BookDirectory extends Div{
+import java.util.Map;
+
+@Route("/:bookRoot/:bookDirectory")
+public class BookDirectory extends Div implements BeforeEnterObserver {
+    final CloudflareR2Client cloudflareR2Client;
+    BookDirectory(CloudflareR2Client cloudflareR2Client) {
+        this.cloudflareR2Client = cloudflareR2Client;
+    }
+
+
+    @Override
+    public void beforeEnter(BeforeEnterEvent beforeEnterEvent) {
+        RouteParameters bookId= beforeEnterEvent.getRouteParameters();
+        String bookRoot = bookId.get("bookRoot").orElse("");
+        String directory = bookId.get("bookDirectory").orElse("");
+        String FullId = bookRoot + "/" + directory;
+        cloudflareR2Client.listObjectsFromDirectory("bookmanager",FullId).forEach(System.out::println);
+        add(new Button("view pdf", event -> {
+            RouteParameters bookParameter = new RouteParameters(
+                    Map.of("bookRoot", bookRoot,"bookDirectory", directory,"book",directory + ".pdf")
+            );
+            UI.getCurrent().navigate(SelectedBookView.class,bookParameter);
+        }));
+
+
+
+    }
 }

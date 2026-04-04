@@ -11,14 +11,14 @@ import com.vaadin.flow.component.html.Span;
 public class CardLayout extends Card {
 
 
-    public CardLayout(String book) {
+    public CardLayout(String book, String Cover) {
         Div div = new Div();
         div.setClassName("inner-card");
         addClassName("cardlayout");
-        Image image = new Image();
-        image.addClassName("cardlayout-image");
-        image.setSrc("book.jpg");
-        div.add(image);
+        Image cover = new Image();
+        cover.addClassName("cardlayout-image");
+        cover.setSrc(Cover);
+        div.add(cover);
         Div cardname = new Div();
         Span span = new Span(book);
         span.addClassName("cardlayout-span");
