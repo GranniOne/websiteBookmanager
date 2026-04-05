@@ -2,13 +2,12 @@ package com.booksmanager.websitebooksmanager.views;
 
 import com.booksmanager.websitebooksmanager.CloudFlare.CloudFlareService;
 import com.booksmanager.websitebooksmanager.CloudFlare.CloudflareR2Client;
-import com.booksmanager.websitebooksmanager.CloudFlare.DataTypes;
-import com.vaadin.flow.component.html.Div;
 import com.vaadin.flow.component.html.IFrame;
 import com.vaadin.flow.router.BeforeEnterEvent;
 import com.vaadin.flow.router.BeforeEnterObserver;
 import com.vaadin.flow.router.Route;
 import com.vaadin.flow.router.RouteParameters;
+import software.amazon.awssdk.core.ResponseInputStream;
 
 
 @Route("/books/:bookDirectory/:book")
@@ -40,8 +39,21 @@ public class SelectedBookView extends IFrame implements BeforeEnterObserver {
         String book = bookId.get("book").orElse("");
         String directory = bookId.get("bookDirectory").orElse("");
         String bookKey = ("books" + "/" + directory + "/" + book).replace("%20"," ");
-        cloudflareService.createPresignedurlBooks(bookKey, DataTypes.PDF, directory);
-        this.getElement().setAttribute("src", cloudflareService.signedUrls.get(directory).getPresignedPdf());
+        ResponseInputStream test = cloudflareR2Client.getObjectFromR2(bookKey);
+        // Build iframe pointing to Spring REST endpoint
+        String src = "/r2/stream/" + directory + "/" + book;
+        this.setSrc(src);
+
+
+
+
+
+
+
+
+
 
     }
+
+
 }

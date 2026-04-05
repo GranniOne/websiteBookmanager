@@ -2,18 +2,14 @@ package com.booksmanager.websitebooksmanager.views;
 
 import com.booksmanager.websitebooksmanager.CloudFlare.CloudFlareService;
 import com.booksmanager.websitebooksmanager.CloudFlare.CloudflareR2Client;
-import com.booksmanager.websitebooksmanager.CloudFlare.DataTypes;
 import com.booksmanager.websitebooksmanager.Layout.CardLayout;
 import com.vaadin.flow.component.UI;
 import com.vaadin.flow.component.dependency.StyleSheet;
 import com.vaadin.flow.component.html.Div;
-import com.vaadin.flow.component.html.Image;
-import com.vaadin.flow.router.BeforeEnterEvent;
-import com.vaadin.flow.router.BeforeEnterObserver;
 import com.vaadin.flow.router.Route;
 import com.vaadin.flow.router.RouteParameters;
 
-import java.util.Arrays;
+import java.io.IOException;
 import java.util.Map;
 @StyleSheet("cardstyle.css")
 @Route("/books")
@@ -35,8 +31,15 @@ public class BookRoot extends Div {
                 String directory = book.key().substring(0, book.key().lastIndexOf("/"));
                 cloudflareR2Client.listObjectsFromDirectory("bookmanager",directory).forEach(practical -> {
                     if(practical.key().contains(".jpg")){
-                        cloudflareService.createPresignedurlBooks(practical.key(), DataTypes.COVER,directory);
-                        CardLayout card = new CardLayout(practical.key().substring(practical.key().indexOf("/") + 1,practical.key().lastIndexOf("/")),cloudflareService.getSignedUrl(practical.key(),DataTypes.COVER,directory));
+                        CardLayout card = null;
+                        try {
+                            card = new CardLayout(practical.key().substring(practical.key().indexOf("/") + 1,practical.key().lastIndexOf("/")),cloudflareR2Client.getObjectFromR2(practical.key()));
+                        } catch (IOException e) {
+                            throw new RuntimeException(e);
+                        }
+
+
+                        //ui navigation
                         card.getElement().addEventListener("click", event -> {
                             RouteParameters bookParameter = new RouteParameters(
                                     Map.of("bookDirectory", directory.substring(directory.indexOf("/") + 1))

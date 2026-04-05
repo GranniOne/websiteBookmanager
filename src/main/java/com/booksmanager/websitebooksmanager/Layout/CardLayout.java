@@ -6,18 +6,20 @@ import com.vaadin.flow.component.html.Div;
 import com.vaadin.flow.component.html.Image;
 import com.vaadin.flow.component.html.Paragraph;
 import com.vaadin.flow.component.html.Span;
+import software.amazon.awssdk.core.ResponseInputStream;
+
+import java.io.IOException;
 
 
 public class CardLayout extends Card {
 
 
-    public CardLayout(String book, String Cover) {
+    public CardLayout(String book, ResponseInputStream response) throws IOException {
         Div div = new Div();
         div.setClassName("inner-card");
         addClassName("cardlayout");
-        Image cover = new Image();
+        Image cover = new Image(response.readAllBytes(),"CoverImage");
         cover.addClassName("cardlayout-image");
-        cover.setSrc(Cover);
         div.add(cover);
         Div cardname = new Div();
         Span span = new Span(book);
