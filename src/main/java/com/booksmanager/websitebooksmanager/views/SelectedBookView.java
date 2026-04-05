@@ -11,8 +11,8 @@ import com.vaadin.flow.router.Route;
 import com.vaadin.flow.router.RouteParameters;
 
 
-@Route("/:bookRoot/:bookDirectory/:book")
-public class SelectedBookView extends Div implements BeforeEnterObserver {
+@Route("/books/:bookDirectory/:book")
+public class SelectedBookView extends IFrame implements BeforeEnterObserver {
 
     final CloudflareR2Client cloudflareR2Client;
     final CloudFlareService cloudflareService;
@@ -21,6 +21,15 @@ public class SelectedBookView extends Div implements BeforeEnterObserver {
         this.getStyle().setHeight("100%").setWidth("100%");
         this.cloudflareR2Client = cloudflareR2Client;
         this.cloudflareService = cloudflareService;
+        // Fill the full viewport
+        this.setWidthFull();
+        this.setHeightFull();
+
+        // Remove borders and scrolling
+        this.getStyle()
+                .set("border", "none")
+                .set("overflow", "hidden")
+                .set("display", "block"); // ensures iframe behaves like a block elemen
     }
 
 
@@ -30,18 +39,9 @@ public class SelectedBookView extends Div implements BeforeEnterObserver {
         RouteParameters bookId= beforeEnterEvent.getRouteParameters();
         String book = bookId.get("book").orElse("");
         String directory = bookId.get("bookDirectory").orElse("");
-        String bookRoot = bookId.get("bookRoot").orElse("");
-        String bookKey = bookRoot + "/" + directory + "/" + book;
-        //if(!cloudflareService.signedUrls.containsKey(bookKey)){
-        //    cloudflareService.createPresignedurlBooks(bookKey, DataTypes.PDF);
-        //    System.out.println(cloudflareService.signedUrls.get(bookKey));
-        //}
+        String bookKey = ("books" + "/" + directory + "/" + book).replace("%20"," ");
+        cloudflareService.createPresignedurlBooks(bookKey, DataTypes.PDF, directory);
+        this.getElement().setAttribute("src", cloudflareService.signedUrls.get(directory).getPresignedPdf());
 
-        System.out.println("did not create a new key \n"+cloudflareService.signedUrls.get(bookKey));
-        IFrame pdfFrame = new IFrame();
-        pdfFrame.setWidth("100%");
-        pdfFrame.setHeight("100%");
-        //pdfFrame.getElement().setAttribute("src", cloudflareService.signedUrls.get(bookKey));
-        add(pdfFrame);
     }
 }

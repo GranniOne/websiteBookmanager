@@ -8,6 +8,8 @@ import com.vaadin.flow.component.UI;
 import com.vaadin.flow.component.dependency.StyleSheet;
 import com.vaadin.flow.component.html.Div;
 import com.vaadin.flow.component.html.Image;
+import com.vaadin.flow.router.BeforeEnterEvent;
+import com.vaadin.flow.router.BeforeEnterObserver;
 import com.vaadin.flow.router.Route;
 import com.vaadin.flow.router.RouteParameters;
 
@@ -17,26 +19,27 @@ import java.util.Map;
 @Route("/books")
 public class BookRoot extends Div {
 
+    private final CloudflareR2Client cloudflareR2Client;
+    private final CloudFlareService cloudflareService;
+    private final Div cardHolder = new Div();
     BookRoot(CloudflareR2Client cloudflareR2Client, CloudFlareService  cloudflareService) {
+        this.cloudflareR2Client = cloudflareR2Client;
+        this.cloudflareService = cloudflareService;
         setClassName("page");
-        Div cardHolder = new Div();
         cardHolder.setClassName("booksview");
-
-        cloudflareR2Client.listObjectsFromDirectory("bookmanager","books/Practical Forensic Imaging Securing Digital Evidence").forEach(s3Object -> System.out.println(s3Object.key()));
-
-
-
         cloudflareR2Client.listObjects("bookmanager").forEach(book -> {
+
+
             if(book.key().contains(".pdf")){
+
                 String directory = book.key().substring(0, book.key().lastIndexOf("/"));
                 cloudflareR2Client.listObjectsFromDirectory("bookmanager",directory).forEach(practical -> {
                     if(practical.key().contains(".jpg")){
-                        String[] directoryArray = practical.key().split("/");
-                        cloudflareService.createPresignedurlBooks(directoryArray, DataTypes.COVER,directory);
-                        CardLayout card = new CardLayout(practical.key().substring(practical.key().indexOf("/") + 1,practical.key().lastIndexOf("/")),cloudflareService.signedUrls.get(directory).getPresignedCover());
+                        cloudflareService.createPresignedurlBooks(practical.key(), DataTypes.COVER,directory);
+                        CardLayout card = new CardLayout(practical.key().substring(practical.key().indexOf("/") + 1,practical.key().lastIndexOf("/")),cloudflareService.getSignedUrl(directory,DataTypes.COVER));
                         card.getElement().addEventListener("click", event -> {
                             RouteParameters bookParameter = new RouteParameters(
-                                    //Map.of("bookRoot", test[0],"bookDirectory", test[1])
+                                    Map.of("bookDirectory", directory.substring(directory.indexOf("/") + 1))
                             );
                             UI.getCurrent().navigate(BookDirectory.class,bookParameter);
                         });
@@ -51,5 +54,9 @@ public class BookRoot extends Div {
 
         });
         add(cardHolder);
+
+
     }
+
+
 }

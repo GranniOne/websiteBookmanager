@@ -11,7 +11,7 @@ import com.vaadin.flow.router.RouteParameters;
 
 import java.util.Map;
 
-@Route("/:bookRoot/:bookDirectory")
+@Route("/books/:bookDirectory")
 public class BookDirectory extends Div implements BeforeEnterObserver {
     final CloudflareR2Client cloudflareR2Client;
     BookDirectory(CloudflareR2Client cloudflareR2Client) {
@@ -22,13 +22,12 @@ public class BookDirectory extends Div implements BeforeEnterObserver {
     @Override
     public void beforeEnter(BeforeEnterEvent beforeEnterEvent) {
         RouteParameters bookId= beforeEnterEvent.getRouteParameters();
-        String bookRoot = bookId.get("bookRoot").orElse("");
+
         String directory = bookId.get("bookDirectory").orElse("");
-        String FullId = bookRoot + "/" + directory;
-        cloudflareR2Client.listObjectsFromDirectory("bookmanager",FullId).forEach(System.out::println);
+
         add(new Button("view pdf", event -> {
             RouteParameters bookParameter = new RouteParameters(
-                    Map.of("bookRoot", bookRoot,"bookDirectory", directory,"book",directory + ".pdf")
+                    Map.of("bookDirectory", directory,"book",directory + ".pdf")
             );
             UI.getCurrent().navigate(SelectedBookView.class,bookParameter);
         }));
