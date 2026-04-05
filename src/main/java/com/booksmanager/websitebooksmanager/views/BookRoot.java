@@ -36,7 +36,7 @@ public class BookRoot extends Div {
                 cloudflareR2Client.listObjectsFromDirectory("bookmanager",directory).forEach(practical -> {
                     if(practical.key().contains(".jpg")){
                         cloudflareService.createPresignedurlBooks(practical.key(), DataTypes.COVER,directory);
-                        CardLayout card = new CardLayout(practical.key().substring(practical.key().indexOf("/") + 1,practical.key().lastIndexOf("/")),cloudflareService.getSignedUrl(directory,DataTypes.COVER));
+                        CardLayout card = new CardLayout(practical.key().substring(practical.key().indexOf("/") + 1,practical.key().lastIndexOf("/")),cloudflareService.getSignedUrl(practical.key(),DataTypes.COVER,directory));
                         card.getElement().addEventListener("click", event -> {
                             RouteParameters bookParameter = new RouteParameters(
                                     Map.of("bookDirectory", directory.substring(directory.indexOf("/") + 1))
