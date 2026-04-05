@@ -8,6 +8,8 @@ import com.vaadin.flow.component.dependency.StyleSheet;
 import com.vaadin.flow.component.html.Div;
 import com.vaadin.flow.router.Route;
 import com.vaadin.flow.router.RouteParameters;
+import software.amazon.awssdk.core.ResponseInputStream;
+import software.amazon.awssdk.services.s3.model.GetObjectResponse;
 
 import java.io.IOException;
 import java.util.Map;
@@ -33,7 +35,15 @@ public class BookRoot extends Div {
                     if(practical.key().contains(".jpg")){
                         CardLayout card = null;
                         try {
-                            card = new CardLayout(practical.key().substring(practical.key().indexOf("/") + 1,practical.key().lastIndexOf("/")),cloudflareR2Client.getObjectFromR2(practical.key()));
+                            byte[] response;
+                            if(cloudflareService.signedUrls.containsKey(practical.key())){
+                                response = cloudflareService.signedUrls.get(practical.key());
+                            }else{
+                                response = cloudflareR2Client.getObjectFromR2(practical.key()).readAllBytes();
+                                cloudflareService.signedUrls.put(practical.key(), response);
+                            }
+
+                            card = new CardLayout(practical.key().substring(practical.key().indexOf("/") + 1,practical.key().lastIndexOf("/")),response);
                         } catch (IOException e) {
                             throw new RuntimeException(e);
                         }

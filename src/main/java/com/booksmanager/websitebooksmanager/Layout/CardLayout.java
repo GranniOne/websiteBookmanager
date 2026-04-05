@@ -14,11 +14,11 @@ import java.io.IOException;
 public class CardLayout extends Card {
 
 
-    public CardLayout(String book, ResponseInputStream response) throws IOException {
+    public CardLayout(String book, byte[] response) throws IOException {
         Div div = new Div();
         div.setClassName("inner-card");
         addClassName("cardlayout");
-        Image cover = new Image(response.readAllBytes(),"CoverImage");
+        Image cover = new Image(response,"CoverImage");
         cover.addClassName("cardlayout-image");
         div.add(cover);
         Div cardname = new Div();
