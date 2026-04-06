@@ -1,5 +1,6 @@
 package com.booksmanager.websitebooksmanager.Layout;
 
+import com.vaadin.flow.component.Composite;
 import com.vaadin.flow.component.card.Card;
 import com.vaadin.flow.component.dependency.StyleSheet;
 import com.vaadin.flow.component.html.Div;
@@ -11,23 +12,34 @@ import software.amazon.awssdk.core.ResponseInputStream;
 import java.io.IOException;
 
 
-public class CardLayout extends Card {
+public class CardLayout extends Composite<Div> {
 
 
-    public CardLayout(String book, byte[] response) throws IOException {
-        Div div = new Div();
-        div.setClassName("inner-card");
-        addClassName("cardlayout");
-        Image cover = new Image(response,"CoverImage");
-        cover.addClassName("cardlayout-image");
-        div.add(cover);
-        Div cardname = new Div();
-        Span span = new Span(book);
-        span.addClassName("cardlayout-span");
-        cardname.setClassName("cardlayout-cardname");
-        cardname.add(span);
-        div.add(cardname);
-        add(div);
+    public CardLayout(String book, String url)  {
+        // Outer Container: <div class="cardlayout">
+        getContent().setClassName("cardlayout");
+
+        // Inner Wrapper: <div class="inner-card">
+        Div innerCard = new Div();
+        innerCard.setClassName("inner-card");
+
+        // Image: <img class="cardlayout-image">
+        Image img = new Image();
+        img.setSrc(url);
+        img.setClassName("cardlayout-image");
+
+        // Text Container: <div class="cardlayout-cardname">
+        Div cardNameDiv = new Div();
+        cardNameDiv.setClassName("cardlayout-cardname");
+
+        // Text: <span class="cardlayout-span">
+        Span titleSpan = new Span(book);
+        titleSpan.setClassName("cardlayout-span");
+
+        // Assemble like the React JSX
+        cardNameDiv.add(titleSpan);
+        innerCard.add(img, cardNameDiv);
+        getContent().add(innerCard);
 
     }
 }

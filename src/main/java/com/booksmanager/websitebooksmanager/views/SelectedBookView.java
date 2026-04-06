@@ -38,22 +38,15 @@ public class SelectedBookView extends IFrame implements BeforeEnterObserver {
         RouteParameters bookId= beforeEnterEvent.getRouteParameters();
         String book = bookId.get("book").orElse("");
         String directory = bookId.get("bookDirectory").orElse("");
-        String bookKey = ("books" + "/" + directory + "/" + book).replace("%20"," ");
-        ResponseInputStream test = cloudflareR2Client.getObjectFromR2(bookKey);
-        // Build iframe pointing to Spring REST endpoint
-        String src = "/r2/stream/" + directory + "/" + book;
+        // Point to our NEW Spring Controller endpoint
+        // We encode the parts so spaces ("%20") don't break the URL
+
+        String src = "/api/pdf/" + directory + "/" + book;
+
+
         this.setSrc(src);
-
-
-
-
-
-
-
-
-
-
     }
+
 
 
 }

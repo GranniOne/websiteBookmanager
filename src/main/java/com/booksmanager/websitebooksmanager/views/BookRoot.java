@@ -12,64 +12,64 @@ import software.amazon.awssdk.core.ResponseInputStream;
 import software.amazon.awssdk.services.s3.model.GetObjectResponse;
 
 import java.io.IOException;
+import java.util.ArrayList;
+import java.util.HashMap;
+import java.util.List;
 import java.util.Map;
 @StyleSheet("cardstyle.css")
 @Route("/books")
 public class BookRoot extends Div {
 
     private final CloudflareR2Client cloudflareR2Client;
-    private final CloudFlareService cloudflareService;
     private final Div cardHolder = new Div();
-    BookRoot(CloudflareR2Client cloudflareR2Client, CloudFlareService  cloudflareService) {
+
+    public BookRoot(CloudflareR2Client cloudflareR2Client, CloudFlareService cloudflareService) {
         this.cloudflareR2Client = cloudflareR2Client;
-        this.cloudflareService = cloudflareService;
+
         setClassName("page");
         cardHolder.setClassName("booksview");
-        cloudflareR2Client.listObjects("bookmanager").forEach(book -> {
-
-
-            if(book.key().contains(".pdf")){
-
-                String directory = book.key().substring(0, book.key().lastIndexOf("/"));
-                cloudflareR2Client.listObjectsFromDirectory("bookmanager",directory).forEach(practical -> {
-                    if(practical.key().contains(".jpg")){
-                        CardLayout card = null;
-                        try {
-                            byte[] response;
-                            if(cloudflareService.signedUrls.containsKey(practical.key())){
-                                response = cloudflareService.signedUrls.get(practical.key());
-                            }else{
-                                response = cloudflareR2Client.getObjectFromR2(practical.key()).readAllBytes();
-                                cloudflareService.signedUrls.put(practical.key(), response);
-                            }
-
-                            card = new CardLayout(practical.key().substring(practical.key().indexOf("/") + 1,practical.key().lastIndexOf("/")),response);
-                        } catch (IOException e) {
-                            throw new RuntimeException(e);
-                        }
-
-
-                        //ui navigation
-                        card.getElement().addEventListener("click", event -> {
-                            RouteParameters bookParameter = new RouteParameters(
-                                    Map.of("bookDirectory", directory.substring(directory.indexOf("/") + 1))
-                            );
-                            UI.getCurrent().navigate(BookDirectory.class,bookParameter);
-                        });
-                        cardHolder.add(card);
-
-                    }
-
-
-                });
-
-            }
-
-        });
         add(cardHolder);
 
+        // 1. Single call to list the whole bucket
+        var allObjects = cloudflareR2Client.listObjects("bookmanager");
 
+        Map<String, String> directoryToCover = new HashMap<>();
+        List<String> pdfPaths = new ArrayList<>();
+
+        allObjects.forEach(obj -> {
+            String key = obj.key();
+            if (key.endsWith(".jpg")) {
+                String dir = key.substring(0, key.lastIndexOf("/") + 1);
+                directoryToCover.put(dir, key);
+            } else if (key.endsWith(".pdf")) {
+                String dir = key.substring(0, key.lastIndexOf("/") + 1);
+                pdfPaths.add(dir);
+            }
+        });
+
+        // 2. Build the shelf using image URLs
+        for (String dir : pdfPaths) {
+            String coverKey = directoryToCover.get(dir);
+
+            if (coverKey != null) {
+                String bookName = dir.substring(dir.indexOf("/") + 1).replace("/", "");
+
+                // Create the URL to our proxy controller
+                String imageUrl = "/api/books/cover?key=" + java.net.URLEncoder.encode(coverKey, java.nio.charset.StandardCharsets.UTF_8);
+
+                // Pass the URL string to the card
+                CardLayout card = new CardLayout(bookName, imageUrl);
+                System.out.println("hellooo");
+                card.getElement().addEventListener("click", event -> {
+                    System.out.println("Clicked on " + coverKey);
+                    String routePath = dir.substring(dir.indexOf("/") + 1);
+                    if(routePath.endsWith("/")) routePath = routePath.substring(0, routePath.length()-1);
+                    UI.getCurrent().navigate(BookDirectory.class, new RouteParameters("bookDirectory", routePath));
+                });
+
+                cardHolder.add(card);
+            }
+        }
+        System.out.println("its done");
     }
-
-
 }

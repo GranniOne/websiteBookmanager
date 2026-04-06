@@ -1,14 +1,14 @@
 package com.booksmanager.websitebooksmanager.controllers;
 
 import com.booksmanager.websitebooksmanager.CloudFlare.CloudflareR2Client;
-import org.springframework.core.io.InputStreamResource;
-import org.springframework.http.HttpHeaders;
-import org.springframework.http.MediaType;
-import org.springframework.http.ResponseEntity;
+import jakarta.servlet.http.HttpServletResponse;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PathVariable;
+import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.RestController;
-import software.amazon.awssdk.core.ResponseInputStream;
+
+import java.io.IOException;
+import java.io.InputStream;
 
 @RestController
 public class BookStreamController {
@@ -19,24 +19,34 @@ public class BookStreamController {
         this.cloudflareR2Client = cloudflareR2Client;
     }
 
-    // Use a dynamic path variable
-    @GetMapping("/r2/stream/{directory}/{book}")
-    public ResponseEntity<InputStreamResource> streamBook(
-            @PathVariable String directory,
-            @PathVariable String book
-    ) {
-        try {
-            String key = "books/" + directory + "/" + book;
-            ResponseInputStream<?> stream = cloudflareR2Client.getObjectFromR2(key);
-            InputStreamResource resource = new InputStreamResource(stream);
+    @GetMapping("/api/books/cover")
+    public void getCover(@RequestParam String key, HttpServletResponse response) throws IOException {
+        response.setContentType("image/jpeg");
+        // Browsers will cache this locally, making the second visit "instant"
+        response.setHeader("Cache-Control", "public, max-age=86400");
 
-            return ResponseEntity.ok()
-                    .header(HttpHeaders.CONTENT_DISPOSITION, "inline; filename=\"" + book + "\"")
-                    .contentType(MediaType.APPLICATION_PDF) // adapt if needed
-                    .body(resource);
+        try (InputStream inputStream = cloudflareR2Client.getObjectInputStream(key)) {
+            org.springframework.util.StreamUtils.copy(inputStream, response.getOutputStream());
         } catch (Exception e) {
-            e.printStackTrace();
-            return ResponseEntity.status(500).build();
+            response.setStatus(HttpServletResponse.SC_NOT_FOUND);
+        }
+    }
+    @GetMapping("/api/pdf/{directory}/{filename}")
+    public void streamPdf(@PathVariable String directory,
+                          @PathVariable String filename,
+                          HttpServletResponse response) throws IOException {
+
+        // Reconstruct the R2 Key (adjust "books/" prefix if needed)
+        String key = "books/" + directory + "/" + filename;
+        System.out.println(key);
+        response.setContentType("application/pdf");
+        // 'inline' tells the browser to show it in the iframe, not download it
+        response.setHeader("Content-Disposition", "inline; filename=\"" + filename + "\"");
+
+        try (InputStream inputStream = cloudflareR2Client.getObjectFromR2(key)) {
+            org.springframework.util.StreamUtils.copy(inputStream, response.getOutputStream());
+        } catch (Exception e) {
+            response.setStatus(HttpServletResponse.SC_NOT_FOUND);
         }
     }
 }

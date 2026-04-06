@@ -86,7 +86,7 @@ public class BookDirectory extends Div implements BeforeEnterObserver {
                 UI.getCurrent().navigate(
                         SelectedBookView.class,
                         new RouteParameters(Map.of(
-                                "bookDirectory", directory,"book",filename
+                                "bookDirectory", directory.replace("%20"," "),"book",filename
                         ))
                 );
             });
