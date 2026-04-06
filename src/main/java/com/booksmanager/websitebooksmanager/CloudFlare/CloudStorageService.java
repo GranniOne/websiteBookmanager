@@ -121,7 +121,7 @@ public class CloudStorageService {
             }
 
 
-            printDeepMetadata(metadata);
+            //printDeepMetadata(metadata);
 
             return metadata;
         } catch (Exception e) {
