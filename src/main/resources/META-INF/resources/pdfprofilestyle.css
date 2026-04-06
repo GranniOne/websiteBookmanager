@@ -22,15 +22,7 @@ body {
 /* =========================================
    2. THE MAIN GALLERY (Library View)
    ========================================= */
-.page {
-    /* Comfy Circular Gradient */
-    background: radial-gradient(circle at center, #1e1e1e 0%, #121212 70%, #080808 100%);
-    min-height: 100vh;
-    padding: 40px 0;
-    display: flex;
-    justify-content: center;
-    width: 100%;
-}
+
 
 .booksview {
     background: var(--island-bg);
@@ -114,11 +106,19 @@ body {
 .book-page-container {
     /* Spotlight Desk Effect */
     background: radial-gradient(circle at center, #2c2c2c 0%, #161616 100%);
-    min-height: 100vh;
+
+    /* Force exactly one screen height */
+    height: 100vh;
+    width: 100vw;
+
+    /* Disable scrolling */
+    overflow: hidden;
+
     display: flex;
     justify-content: center;
     align-items: center;
     padding: 40px 20px;
+    box-sizing: border-box; /* Ensures padding doesn't push the width past 100% */
 }
 
 .paper-sheet {

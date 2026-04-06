@@ -1,38 +1,57 @@
 package com.booksmanager.websitebooksmanager.views;
 
-import com.booksmanager.websitebooksmanager.CloudFlare.CloudflareR2Client;
+import com.vaadin.flow.component.UI;
 import com.vaadin.flow.component.button.Button;
+import com.vaadin.flow.component.dependency.StyleSheet;
+import com.vaadin.flow.component.html.Div;
 import com.vaadin.flow.component.html.H1;
-import com.vaadin.flow.component.html.Image;
 import com.vaadin.flow.component.html.Paragraph;
+import com.vaadin.flow.component.icon.VaadinIcon;
+import com.vaadin.flow.component.orderedlayout.HorizontalLayout;
 import com.vaadin.flow.component.orderedlayout.VerticalLayout;
 import com.vaadin.flow.router.Route;
-import software.amazon.awssdk.core.ResponseInputStream;
-import software.amazon.awssdk.services.s3.model.GetObjectResponse;
 
-import java.io.IOException;
-
-
+@StyleSheet("styles.css")
 @Route("")
-public class HomeView extends VerticalLayout {
+public class HomeView extends Div {
 
-    public HomeView(CloudflareR2Client cloudflareR2Client) {
+    public HomeView() {
+        // Force the view to fill the browser window
+        setSizeFull();
+        addClassName("page");
 
-        add(new H1("Welcome to your new application"));
-        add(new Paragraph("This is the home view"));
+        VerticalLayout welcomeIsland = new VerticalLayout();
+        welcomeIsland.addClassName("home-island-container");
+        welcomeIsland.addClassName("home-island");
 
-        add(new Paragraph("You can edit this view in src\\main\\java\\com\\booksmanager\\websitebooksmanager\\views\\HomeView.java"));
+        // Rest of your logic...
+        H1 title = new H1("THE DIGITAL VOLUME ARCHIVE");
+        title.addClassName("home-title");
 
-        add(new Button("hello" ,buttonClickEvent -> {
-            ResponseInputStream<GetObjectResponse> test =  cloudflareR2Client.getObjectFromR2("books/10 led Projects For Geeks/cover.jpg");
-            try {
-                byte[] works = test.readAllBytes();
-                Image image = new Image(works,"test");
-                add(image);
-            } catch (IOException e) {
-                throw new RuntimeException(e);
-            }
-        }));
+        Paragraph subTitle = new Paragraph("A high-fidelity management system for your technical library.");
+        subTitle.addClassName("home-subtitle");
 
+        Div divider = new Div();
+        divider.addClassName("home-divider");
+
+        HorizontalLayout actionRow = new HorizontalLayout();
+        actionRow.addClassName("home-action-row");
+
+        Button exploreBtn = createMenuButton("Explore Collection", VaadinIcon.BOOK, "primary");
+        exploreBtn.addClickListener(e -> UI.getCurrent().navigate(BookRoot.class));
+
+        actionRow.add(exploreBtn,
+                createMenuButton("Upload Book", VaadinIcon.UPLOAD, "secondary"),
+                createMenuButton("Manage Archive", VaadinIcon.TRASH, "danger"));
+
+        welcomeIsland.add(title, subTitle, divider, actionRow);
+        add(welcomeIsland);
+    }
+
+    private Button createMenuButton(String text, VaadinIcon icon, String theme) {
+        Button btn = new Button(text, icon.create());
+        btn.addClassName("home-btn");
+        btn.addClassName("btn-" + theme);
+        return btn;
     }
 }
