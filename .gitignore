@@ -31,9 +31,10 @@ build/
 !**/src/test/**/build/
 
 src/main/frontend/
-src/main/bundles/
+
 
 node_modules/
 
 ### VS Code ###
 .vscode/
+/src/main/bundles/
