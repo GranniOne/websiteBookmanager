@@ -12,7 +12,8 @@
     backdrop-filter: blur(10px);
     display: grid;
     /* This makes sure it stays a grid and doesn't turn into a flexbox from the home styles */
-    grid-template-columns: repeat(auto-fill, minmax(200px, 1fr));
+    grid-template-columns: repeat(auto-fill, minmax(250px, 1fr));
+
     gap: 25px;
     padding: 40px !important; /* Specific padding for grid */
     width: 90%;
@@ -30,6 +31,7 @@
     display: flex;
     flex-direction: column;
     cursor: pointer;
+    width : 100%;
 }
 
 .cardlayout:hover {
