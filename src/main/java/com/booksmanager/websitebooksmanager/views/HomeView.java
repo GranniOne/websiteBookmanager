@@ -18,7 +18,7 @@ public class HomeView extends Div {
     public HomeView() {
         // Force the view to fill the browser window
         setSizeFull();
-        addClassName("page");
+        addClassName("home-page-wrapper");
 
         VerticalLayout welcomeIsland = new VerticalLayout();
         welcomeIsland.addClassName("home-island-container");

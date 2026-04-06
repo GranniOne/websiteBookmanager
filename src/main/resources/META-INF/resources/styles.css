@@ -7,13 +7,13 @@ html, body {
 }
 
 /* The Full Screen Container */
-.page {
+.home-page-wrapper {
     background: radial-gradient(circle at center, #1e1e1e 0%, #121212 70%, #080808 100%) !important;
     min-height: 100vh;
     width: 100%;
     display: flex;
     justify-content: center;
-    align-items: center; /* Centers the island vertically */
+    align-items: center;
     margin: 0;
 }
 

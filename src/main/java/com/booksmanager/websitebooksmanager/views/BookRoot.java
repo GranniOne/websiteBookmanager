@@ -26,8 +26,8 @@ public class BookRoot extends Div {
     public BookRoot(CloudflareR2Client cloudflareR2Client, CloudFlareService cloudflareService) {
         this.cloudflareR2Client = cloudflareR2Client;
 
-        setClassName("page");
-        cardHolder.setClassName("booksview");
+        setClassName("gallery-page-wrapper");
+        cardHolder.setClassName("gallery-island");
         add(cardHolder);
 
         // 1. Single call to list the whole bucket

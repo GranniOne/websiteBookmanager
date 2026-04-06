@@ -1,29 +1,23 @@
 /* 1. The Deep Base Layer */
-.page {
+.gallery-page-wrapper {
     background: radial-gradient(circle at center, #1e1e1e 0%, #121212 70%, #0a0a0a 100%);
     min-height: 100vh;
-    padding: 60px 0; /* Creates space above and below the "page" */
+    padding: 60px 0;
     display: flex;
     justify-content: center;
 }
 
-/* 2. The Rounded "Island" Container */
-.booksview {
+.gallery-island {
     background: rgba(27, 27, 27, 0.95);
-    backdrop-filter: blur(10px); /* Modern "frosted glass" effect */
+    backdrop-filter: blur(10px);
     display: grid;
-    grid-template-columns: repeat(5, 1fr);
-    gap: 25px; /* Increased gap for a more premium feel */
-    padding: 40px;
-    width: 85%;
-    max-width: 1400px;
-
-    /* Rounding the page top and bottom */
+    /* This makes sure it stays a grid and doesn't turn into a flexbox from the home styles */
+    grid-template-columns: repeat(auto-fill, minmax(200px, 1fr));
+    gap: 25px;
+    padding: 40px !important; /* Specific padding for grid */
+    width: 90%;
+    max-width: 1600px;
     border-radius: 30px;
-
-    /* Subtle shadow to separate it from the deep background */
-    box-shadow: 0 20px 50px rgba(0, 0, 0, 0.4);
-    border: 1px solid #2a2a2a;
 }
 
 /* 3. The Re-Imagined Cards */

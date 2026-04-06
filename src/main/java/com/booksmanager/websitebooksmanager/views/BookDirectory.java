@@ -28,7 +28,7 @@ public class BookDirectory extends Div implements BeforeEnterObserver {
     final CloudflareR2Client cloudflareR2Client;
     BookDirectory(CloudflareR2Client cloudflareR2Client) {
         this.cloudflareR2Client = cloudflareR2Client;
-        this.setClassName("book-page-container");
+        this.setClassName("book-details-wrapper");
     }
 
 
