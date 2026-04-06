@@ -33,10 +33,12 @@ body {
 
 .paper-sheet {
     background-color: var(--paper-bg);
-    width: 100%;
+    width: 70vw;
     max-width: 750px;
-    padding: 60px 80px;
+    max-height: 95vh;
+    padding: 40px 80px 40px;
 
+    box-sizing: border-box;
     /* Layered "Stack of Paper" Shadows */
     box-shadow:
             0 1px 1px rgba(0,0,0,0.1),
@@ -53,6 +55,31 @@ body {
     color: #1a1a1a;
 }
 
+.outline-grid {
+    /* Ensure the container doesn't grow */
+    width: 100%;
+    max-width: 750px;
+
+    /* Use a viewport-based height so it scales,
+       this prevents it from ever pushing the button off-screen */
+    height: 40vh;
+    min-height: 400px;
+    max-height: 600px;
+
+    margin-top: 40px;
+    border: 1px solid rgba(0,0,0,0.1);
+
+    /* This is the key: clip anything that tries to escape */
+    overflow: hidden;
+    display: flex;
+}
+
+/* Target the Vaadin Grid inside the div to make it scrollable */
+.outline-grid vaadin-tree-grid {
+    height: 100%;
+    width: 100%;
+}
+
 .book-title {
     font-family: "Georgia", serif;
     font-size: 2.8rem;
@@ -63,7 +90,7 @@ body {
     letter-spacing: 2px;
     line-height: 1.1;
 }
-
+/*
 .title-divider {
     width: 100px;
     height: 1px;
@@ -71,6 +98,8 @@ body {
     margin: 30px 0;
     opacity: 0.3;
 }
+
+ */
 
 .book-details {
     width: 100%;
@@ -102,7 +131,10 @@ body {
 
 /* Archive Action Button */
 .book-button {
-    margin-top: 50px;
+    /* This pushes the button to the bottom of the flex container */
+    margin-top: 20px;
+
+
     background-color: #1a1a1a;
     color: var(--paper-bg);
     border: none;

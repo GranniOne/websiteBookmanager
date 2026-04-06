@@ -9,6 +9,9 @@ import com.vaadin.flow.component.html.H2;
 import com.vaadin.flow.component.html.H3;
 import com.vaadin.flow.component.html.Paragraph;
 import com.vaadin.flow.component.orderedlayout.HorizontalLayout;
+import com.vaadin.flow.component.treegrid.TreeGrid;
+import com.vaadin.flow.data.provider.hierarchy.TreeData;
+import com.vaadin.flow.data.provider.hierarchy.TreeDataProvider;
 import com.vaadin.flow.router.BeforeEnterEvent;
 import com.vaadin.flow.router.BeforeEnterObserver;
 import com.vaadin.flow.router.Route;
@@ -19,12 +22,23 @@ import tools.jackson.databind.JsonNode;
 import tools.jackson.databind.ObjectMapper;
 
 import java.io.IOException;
+import java.util.ArrayList;
 import java.util.Iterator;
+import java.util.List;
 import java.util.Map;
 
 @StyleSheet("pdfprofilestyle.css")
 @Route("/books/:bookDirectory")
 public class BookDirectory extends Div implements BeforeEnterObserver {
+    public static class OutlineItem {
+        public final JsonNode node;
+        public OutlineItem(JsonNode node) { this.node = node; }
+
+        public String getTitle() {
+            return node.has("title") ? node.get("title").asText() : "Untitled";
+        }
+    }
+
     final CloudflareR2Client cloudflareR2Client;
     BookDirectory(CloudflareR2Client cloudflareR2Client) {
         this.cloudflareR2Client = cloudflareR2Client;
@@ -56,6 +70,10 @@ public class BookDirectory extends Div implements BeforeEnterObserver {
             String type = bookNode.get("type").asText();
             String format = bookNode.get("format").asText();
 
+
+
+
+
             JsonNode topicsNode = bookNode.get("topics");
             String topics = topicsNode.isArray() && topicsNode.size() > 0
                     ? String.join(", ", mapper.convertValue(topicsNode, String[].class))
@@ -81,6 +99,31 @@ public class BookDirectory extends Div implements BeforeEnterObserver {
             details.add(createDetailRow("Topics", topics));
             paper.add(details);
 
+            // 2. In your main logic:
+            TreeGrid<OutlineItem> treeGrid = new TreeGrid<>();
+            treeGrid.setClassName("outline-grid");
+            // 3. Add the column using the wrapper's getter
+            treeGrid.addHierarchyColumn(OutlineItem::getTitle).setHeader("Table of Contents");
+
+            // 4. Fetch the data
+            JsonNode outlineNode = bookNode.get("outline");
+            if (outlineNode != null && outlineNode.isArray()) {
+                List<OutlineItem> rootItems = new ArrayList<>();
+                outlineNode.forEach(n -> rootItems.add(new OutlineItem(n)));
+
+                // 5. Set Items with recursive wrapper creation
+                treeGrid.setItems(rootItems, parentItem -> {
+                    List<OutlineItem> children = new ArrayList<>();
+                    JsonNode childNode = parentItem.node.get("children");
+                    if (childNode != null && childNode.isArray()) {
+                        childNode.forEach(n -> children.add(new OutlineItem(n)));
+                    }
+                    return children;
+                });
+            }
+
+            treeGrid.setAllRowsVisible(true);
+            paper.add(treeGrid);
             // View Action
             Button viewButton = new Button("Open Volume", e -> {
                 UI.getCurrent().navigate(
@@ -119,5 +162,12 @@ public class BookDirectory extends Div implements BeforeEnterObserver {
         sValue.setClassName("detail-value");
         row.add(sLabel, sValue);
         return row;
+    }
+    private List<JsonNode> getChildrenList(JsonNode parent) {
+        List<JsonNode> children = new ArrayList<>();
+        if (parent != null && parent.isArray()) {
+            parent.forEach(children::add);
+        }
+        return children;
     }
 }
