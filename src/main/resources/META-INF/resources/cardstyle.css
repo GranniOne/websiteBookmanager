@@ -1,6 +1,6 @@
 /* 1. The Deep Base Layer */
 .page {
-    background: #121212;
+    background: radial-gradient(circle at center, #1e1e1e 0%, #121212 70%, #0a0a0a 100%);
     min-height: 100vh;
     padding: 60px 0; /* Creates space above and below the "page" */
     display: flex;
@@ -9,7 +9,8 @@
 
 /* 2. The Rounded "Island" Container */
 .booksview {
-    background: #1b1b1b;
+    background: rgba(27, 27, 27, 0.95);
+    backdrop-filter: blur(10px); /* Modern "frosted glass" effect */
     display: grid;
     grid-template-columns: repeat(5, 1fr);
     gap: 25px; /* Increased gap for a more premium feel */
@@ -30,7 +31,7 @@
     background: #242424; /* Slightly lighter than the grid to pop */
     border-radius: 12px;
     overflow: hidden;
-    transition: all 0.3s cubic-bezier(0.25, 0.8, 0.25, 1);
+    transition: all 0.4s cubic-bezier(0.175, 0.885, 0.32, 1.275); /* Bouncy "pop" feel */
     border: 1px solid #333;
     display: flex;
     flex-direction: column;
