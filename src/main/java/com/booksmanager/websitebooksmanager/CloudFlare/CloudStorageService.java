@@ -33,51 +33,13 @@ public class CloudStorageService {
     private final ObjectMapper mapper = new ObjectMapper();
     private final String BUCKET_NAME = "bookmanager";
 
+
     CloudStorageService(CloudflareR2Client cloudflareR2Client) {
         this.cloudflareR2Client = cloudflareR2Client;
     }
-    /**
-     * The Entry Point: Call this from your Vaadin View.
-     * @param tempPath The path to the .tmp file on C: drive
-     */
-    public Map<String, Object> archiveBookSuite(Path tempPath, String category, String level) {
-        // 1. DISCOVERY: Open the PDF and see who it is
-        Map<String, Object> metadataMap = createMetaDataMap(tempPath, category, level);
-
-        // 2. IDENTITY: Get the title the service just discovered
-        String discoveredTitle = (String) metadataMap.get("title");
-        String originalFileName = (String) metadataMap.get("filename");
-
-        // 3. PATHING: Define the cloud folder based on discovery
-        String folderKey = "books/" + discoveredTitle + "/";
-        String bucket = "bookmanager";
-
-        // 4. GENERATION
-        String jsonMetadata = convertMapToJson(metadataMap);
-        byte[] thumbnail = generateThumbnailFromPath(tempPath);
-
-        // 5.UPLOADS
-        //PDF: Key uses the discovered identity
-        this.cloudflareR2Client.putObject(bucket, folderKey + originalFileName, tempPath);
-
-        //JSON: metadata.json
-        this.cloudflareR2Client.putObject(bucket, folderKey + "meta.json", jsonMetadata);
-
-        //Image: thumb.jpg
-        if (thumbnail != null) {
-            this.cloudflareR2Client.putObject(bucket, folderKey + "cover.jpg", thumbnail);
-        }
 
 
-
-        // 6. CLEANUP
-        try { Files.deleteIfExists(tempPath); } catch (IOException ignored) {}
-
-        // Return the map so the UI knows what happened
-        return metadataMap;
-    }
-
-    private Map<String, Object> createMetaDataMap(Path path, String category, String level) {
+    public Map<String, Object> createMetaDataMap(Path path, String category, String level) {
         try (PDDocument document = Loader.loadPDF(path.toFile())) {
             Map<String, Object> metadata = new HashMap<>();
 
@@ -129,7 +91,7 @@ public class CloudStorageService {
         }
     }
 
-    private String convertMapToJson(Map<String, Object> map) {
+    public String convertMapToJson(Map<String, Object> map) {
         try {
             return mapper.writerWithDefaultPrettyPrinter().writeValueAsString(map);
         } catch (Exception e) {
@@ -138,7 +100,7 @@ public class CloudStorageService {
     }
 
     // Your existing thumbnail logic works perfectly!
-    private byte[] generateThumbnailFromPath(Path localFilePath) {
+    public byte[] generateThumbnailFromPath(Path localFilePath) {
         try (PDDocument document = Loader.loadPDF(localFilePath.toFile())) {
             PDFRenderer pdfRenderer = new PDFRenderer(document);
             BufferedImage bim = pdfRenderer.renderImageWithDPI(0, 72);

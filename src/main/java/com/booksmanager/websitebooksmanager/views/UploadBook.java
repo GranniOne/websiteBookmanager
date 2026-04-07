@@ -2,6 +2,7 @@ package com.booksmanager.websitebooksmanager.views;
 
 
 import com.booksmanager.websitebooksmanager.CloudFlare.CloudStorageService;
+import com.booksmanager.websitebooksmanager.CloudFlare.CloudflareR2Client;
 import com.vaadin.flow.component.html.Div;
 import com.vaadin.flow.component.notification.Notification;
 import com.vaadin.flow.router.*;
@@ -9,6 +10,8 @@ import org.springframework.beans.factory.annotation.Value;
 
 
 import java.io.FileInputStream;
+import java.io.IOException;
+import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.Paths;
 import java.util.List;
@@ -17,10 +20,12 @@ import java.util.Map;
 @Route("upload")
 public class UploadBook extends Div implements HasUrlParameter<String> {
     final CloudStorageService cloudStorageService;
+    final CloudflareR2Client cloudflareR2Client;
     final String uploadDir;
 
-    UploadBook(CloudStorageService cloudStorageService, @Value("${app.upload.dir}") String uploadDir) {
+    UploadBook(CloudStorageService cloudStorageService, CloudflareR2Client cloudflareR2Client, @Value("${app.upload.dir}") String uploadDir) {
         this.cloudStorageService = cloudStorageService;
+        this.cloudflareR2Client = cloudflareR2Client;
         this.uploadDir = uploadDir;
 
     }
@@ -41,15 +46,43 @@ public class UploadBook extends Div implements HasUrlParameter<String> {
         if (!securePath.startsWith(baseDirectory)) {
             throw new SecurityException("Invalid file path detected!");
         }
-        // The UI doesn't know the title yet!
-        Map<String, Object> result = cloudStorageService.archiveBookSuite(
-                securePath,
-                "programming",
-                "intermediate"
-        );
+
+        Map<String, Object> metadataMap = cloudStorageService.createMetaDataMap(securePath,"programming","intermediate");
+
+        // 2. IDENTITY: Get the title the service just discovered
+        String discoveredTitle = (String) metadataMap.get("title");
+        String originalFileName = (String) metadataMap.get("filename");
+
+        // 3. PATHING: Define the cloud folder based on discovery
+        String folderKey = "books/" + discoveredTitle + "/";
+        String bucket = "bookmanager";
+
+
+        // 4. GENERATION
+        String jsonMetadata = cloudStorageService.convertMapToJson(metadataMap);
+        byte[] thumbnail = cloudStorageService.generateThumbnailFromPath(securePath);
+
+        // 5.UPLOADS
+        //PDF: Key uses the discovered identity
+        this.cloudflareR2Client.putObject(bucket, folderKey + originalFileName, securePath);
+
+        //JSON: metadata.json
+        this.cloudflareR2Client.putObject(bucket, folderKey + "meta.json", jsonMetadata);
+
+        //Image: thumb.jpg
+        if (thumbnail != null) {
+            this.cloudflareR2Client.putObject(bucket, folderKey + "cover.jpg", thumbnail);
+        }
+
+        // 6. CLEANUP
+        try { Files.deleteIfExists(securePath); } catch (IOException ignored) {}
+
+
+
+
 
         // Now the UI knows!
-        Notification.show("Archived: " + result.get("title"));
+        Notification.show("Archived: " + metadataMap.get("title"));
 
     }
 }
