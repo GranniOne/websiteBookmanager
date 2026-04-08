@@ -9,6 +9,7 @@ import org.apache.pdfbox.pdmodel.interactive.documentnavigation.outline.PDOutlin
 import org.apache.pdfbox.pdmodel.interactive.documentnavigation.outline.PDOutlineNode;
 import org.apache.pdfbox.rendering.PDFRenderer;
 import org.springframework.stereotype.Service;
+import software.amazon.awssdk.services.s3.endpoints.internal.Value;
 import tools.jackson.databind.ObjectMapper;
 
 import javax.imageio.ImageIO;
@@ -57,19 +58,49 @@ public class CloudStorageService {
             // We replace underscores with spaces to make it a "Title".
             String title = baseName.replace("_", " ");
 
-            metadata.put("title", title);
+
             metadata.put("filename", cleanFileName);
             metadata.put("category", category);
             metadata.put("topics", new String[]{});
             metadata.put("level", level);
             metadata.put("type", "book");
             metadata.put("format", "pdf");
-
             // Use PDFBox to get the actual page count
             try {
                 metadata.put("pages", document.getNumberOfPages());
-                metadata.put("Creation Data",document.getDocumentInformation().getCreationDate());
-                metadata.put("Modification Data",document.getDocumentInformation().getModificationDate());
+                document.getDocumentInformation().getMetadataKeys().forEach(event -> {
+                    switch (event) {
+                        case "Author":
+                            metadata.put(event, document.getDocumentInformation().getAuthor() == null ? event :  document.getDocumentInformation().getAuthor());
+                            break;
+                        case "CreationDate":
+                            metadata.put(event, document.getDocumentInformation().getCreationDate() == null ? event :  document.getDocumentInformation().getCreationDate());
+                            break;
+                        case "Creator":
+                            metadata.put(event, document.getDocumentInformation().getCreator() == null ? event :  document.getDocumentInformation().getCreator());
+                            break;
+                        case "KeyWords":
+                            metadata.put(event, document.getDocumentInformation().getKeywords() ==  null ? event :  document.getDocumentInformation().getKeywords());
+                            break;
+                        case "ModDate":
+                            metadata.put(event, document.getDocumentInformation().getModificationDate() ==  null ? event :  document.getDocumentInformation().getModificationDate());
+                            break;
+                        case "Producer":
+                            metadata.put(event, document.getDocumentInformation().getProducer() ==  null ? event :  document.getDocumentInformation().getProducer());
+                            break;
+                        case "Subject":
+                            metadata.put(event, document.getDocumentInformation().getSubject() ==   null ? event :  document.getDocumentInformation().getSubject());
+                            break;
+                        case "Title":
+                            if(title.equals(event)){
+                                metadata.put(event, document.getDocumentInformation().getTitle() ==    null ? event :  document.getDocumentInformation().getTitle());
+                            }else {
+                                document.getDocumentInformation().setTitle(title);
+                                metadata.put(event, document.getDocumentInformation().getTitle() ==    null ? event :  document.getDocumentInformation().getTitle());
+                            }
+                            break;
+                    }});
+
                 PDDocumentOutline documentOutline = document.getDocumentCatalog().getDocumentOutline();
 
                 if (documentOutline != null) {

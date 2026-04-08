@@ -3,8 +3,19 @@ package com.booksmanager.websitebooksmanager.views;
 
 import com.booksmanager.websitebooksmanager.CloudFlare.CloudStorageService;
 import com.booksmanager.websitebooksmanager.CloudFlare.CloudflareR2Client;
+import com.vaadin.flow.component.Component;
+import com.vaadin.flow.component.HasValue;
+import com.vaadin.flow.component.Text;
+import com.vaadin.flow.component.datepicker.DatePicker;
 import com.vaadin.flow.component.html.Div;
+import com.vaadin.flow.component.html.Image;
+import com.vaadin.flow.component.html.Span;
 import com.vaadin.flow.component.notification.Notification;
+import com.vaadin.flow.component.orderedlayout.FlexComponent;
+import com.vaadin.flow.component.orderedlayout.HorizontalLayout;
+import com.vaadin.flow.component.textfield.NumberField;
+import com.vaadin.flow.component.textfield.TextField;
+import com.vaadin.flow.dom.Style;
 import com.vaadin.flow.router.*;
 import org.springframework.beans.factory.annotation.Value;
 
@@ -14,8 +25,9 @@ import java.io.IOException;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.Paths;
-import java.util.List;
-import java.util.Map;
+import java.text.DateFormat;
+import java.time.ZoneId;
+import java.util.*;
 
 @Route("upload")
 public class UploadBook extends Div implements HasUrlParameter<String> {
@@ -49,9 +61,72 @@ public class UploadBook extends Div implements HasUrlParameter<String> {
 
         Map<String, Object> metadataMap = cloudStorageService.createMetaDataMap(securePath,"programming","intermediate");
 
+        Div div = new Div();
+        div.getStyle().setFlexDirection(Style.FlexDirection.COLUMN).setDisplay(Style.Display.FLEX).setBackground("#ffeaea");
+
+        // Container for our inputs so we can access them later
+        Map<String, HasValue<?, ?>> fieldRegistry = new HashMap<>();
+
+        metadataMap.forEach((key, value) -> {
+            if (key.equals("outline")) return; // Don't make the TOC editable in a text field
+
+            HorizontalLayout row = new HorizontalLayout();
+            row.setWidthFull();
+            row.setAlignItems(FlexComponent.Alignment.CENTER);
+
+            Component inputField;
+
+            // Determine the type of input based on the key or value type
+            if (value instanceof Calendar || key.contains("Date")) {
+                DatePicker datePicker = new DatePicker(key);
+                if (value instanceof Calendar) {
+                    // Convert Calendar to LocalDate for the DatePicker
+                    datePicker.setValue(((Calendar) value).toInstant()
+                            .atZone(ZoneId.systemDefault()).toLocalDate());
+                }
+                inputField = datePicker;
+            } else if (value instanceof Integer || key.equals("pages")) {
+                NumberField numberField = new NumberField(key);
+                numberField.setValue(value != null ? ((Integer) value).doubleValue() : 0.0);
+                inputField = numberField;
+            } else if (value instanceof String[]) {
+                TextField textField = new TextField(key);
+                String joined = String.join(", ", (String[]) value);
+                textField.setValue(joined);
+                textField.setPlaceholder("Separate with commas...");
+                inputField = textField;
+
+
+            } else {
+                TextField textField = new TextField(key);
+                textField.setValue(value != null ? value.toString() : "");
+                textField.setWidthFull();
+                inputField = textField;
+            }
+
+            fieldRegistry.put(key, (HasValue<?, ?>) inputField);
+            div.add(inputField);
+        });
+
+        add(div);
+
+
         // 2. IDENTITY: Get the title the service just discovered
         String discoveredTitle = (String) metadataMap.get("title");
         String originalFileName = (String) metadataMap.get("filename");
+
+        String discoveredCategory = (String) metadataMap.get("category");
+        String[] discoveredTopic = (String[]) metadataMap.get("topics");
+        String discoveredLevel =  (String) metadataMap.get("level");
+        String discoveredType = (String) metadataMap.get("type");
+        String discoveredFormat = (String) metadataMap.get("format");
+        int discoveredPages = (int) metadataMap.get("pages");
+        String discoveredCreationDate = (String) metadataMap.get("creationDate");
+
+
+
+
+
 
         // 3. PATHING: Define the cloud folder based on discovery
         String folderKey = "books/" + discoveredTitle + "/";
@@ -62,7 +137,15 @@ public class UploadBook extends Div implements HasUrlParameter<String> {
         String jsonMetadata = cloudStorageService.convertMapToJson(metadataMap);
         byte[] thumbnail = cloudStorageService.generateThumbnailFromPath(securePath);
 
-        // 5.UPLOADS
+        Image image  = new Image(thumbnail,"cover image");
+        add(image);
+
+
+
+
+
+
+        /*        // 5.UPLOADS
         //PDF: Key uses the discovered identity
         this.cloudflareR2Client.putObject(bucket, folderKey + originalFileName, securePath);
 
@@ -77,6 +160,8 @@ public class UploadBook extends Div implements HasUrlParameter<String> {
         // 6. CLEANUP
         try { Files.deleteIfExists(securePath); } catch (IOException ignored) {}
 
+
+         */
 
 
 
