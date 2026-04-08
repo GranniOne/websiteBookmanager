@@ -111,25 +111,8 @@ public class UploadBook extends Div implements HasUrlParameter<String> {
         add(div);
 
 
-        // 2. IDENTITY: Get the title the service just discovered
-        String discoveredTitle = (String) metadataMap.get("title");
-        String originalFileName = (String) metadataMap.get("filename");
-
-        String discoveredCategory = (String) metadataMap.get("category");
-        String[] discoveredTopic = (String[]) metadataMap.get("topics");
-        String discoveredLevel =  (String) metadataMap.get("level");
-        String discoveredType = (String) metadataMap.get("type");
-        String discoveredFormat = (String) metadataMap.get("format");
-        int discoveredPages = (int) metadataMap.get("pages");
-        String discoveredCreationDate = (String) metadataMap.get("creationDate");
-
-
-
-
-
-
         // 3. PATHING: Define the cloud folder based on discovery
-        String folderKey = "books/" + discoveredTitle + "/";
+        String folderKey = "books/" + (String) metadataMap.get("title") + "/";
         String bucket = "bookmanager";
 
 
