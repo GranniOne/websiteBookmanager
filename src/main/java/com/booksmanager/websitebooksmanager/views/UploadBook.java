@@ -51,7 +51,7 @@ public class UploadBook extends Div implements HasUrlParameter<String> {
                 .getParameters()
                 .get("file");
 
-        Path pathFromUrl = Paths.get(pathList.get(0)).normalize();
+        Path pathFromUrl = Paths.get(pathList.getFirst()).normalize();
         Path baseDirectory = Paths.get(uploadDir);
         Path securePath = baseDirectory.resolve(pathFromUrl).normalize();
 
