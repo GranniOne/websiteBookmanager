@@ -17,8 +17,7 @@ public class CardLayout extends Composite<Div> {
 
     public CardLayout(String book, String url)  {
         // Outer Container: <div class="cardlayout">
-        getContent().setClassName("cardlayout");
-
+        getContent().setClassName("Maincardlayout: " + book);
         // Inner Wrapper: <div class="inner-card">
         Div innerCard = new Div();
         innerCard.setClassName("inner-card");

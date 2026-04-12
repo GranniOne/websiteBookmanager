@@ -3,11 +3,19 @@ package com.booksmanager.websitebooksmanager.views;
 import com.booksmanager.websitebooksmanager.CloudFlare.CloudFlareService;
 import com.booksmanager.websitebooksmanager.CloudFlare.CloudflareR2Client;
 import com.booksmanager.websitebooksmanager.Layout.CardLayout;
+import com.vaadin.flow.component.InputEvent;
+import com.vaadin.flow.component.Text;
 import com.vaadin.flow.component.UI;
+import com.vaadin.flow.component.button.Button;
+import com.vaadin.flow.component.card.Card;
 import com.vaadin.flow.component.dependency.StyleSheet;
 import com.vaadin.flow.component.html.Div;
+import com.vaadin.flow.component.textfield.TextArea;
+import com.vaadin.flow.component.textfield.TextField;
+import com.vaadin.flow.data.value.ValueChangeMode;
 import com.vaadin.flow.router.Route;
 import com.vaadin.flow.router.RouteParameters;
+import org.jspecify.annotations.NonNull;
 import software.amazon.awssdk.core.ResponseInputStream;
 import software.amazon.awssdk.services.s3.model.GetObjectResponse;
 
@@ -22,13 +30,13 @@ public class BookRoot extends Div {
 
     private final CloudflareR2Client cloudflareR2Client;
     private final Div cardHolder = new Div();
-
+    private Map<String, CardLayout> cardMap = new  HashMap<>();
     public BookRoot(CloudflareR2Client cloudflareR2Client, CloudFlareService cloudflareService) {
         this.cloudflareR2Client = cloudflareR2Client;
 
         setClassName("gallery-page-wrapper");
         cardHolder.setClassName("gallery-island");
-        add(cardHolder);
+
 
         // 1. Single call to list the whole bucket
         var allObjects = cloudflareR2Client.listObjects("bookmanager");
@@ -59,6 +67,7 @@ public class BookRoot extends Div {
 
                 // Pass the URL string to the card
                 CardLayout card = new CardLayout(bookName, imageUrl);
+                cardMap.put(bookName,card);
                 System.out.println("hellooo");
                 card.getElement().addEventListener("click", event -> {
                     System.out.println("Clicked on " + coverKey);
@@ -70,6 +79,22 @@ public class BookRoot extends Div {
                 cardHolder.add(card);
             }
         }
-        System.out.println("its done");
+        TextField field = getTextField();
+        add(field);
+        add(cardHolder);
+    }
+
+    private @NonNull TextField getTextField() {
+        TextField field = new TextField();
+        field.setValueChangeMode(ValueChangeMode.TIMEOUT);
+        field.setValueChangeTimeout(300);
+        field.setClassName("card-gallery-search-field");
+        field.setMaxHeight("30px");
+        field.addValueChangeListener(event -> {
+            cardMap.forEach((key, card) -> {
+                card.setVisible(key.toLowerCase().contains(field.getValue().toLowerCase()));
+            });
+        });
+        return field;
     }
 }
