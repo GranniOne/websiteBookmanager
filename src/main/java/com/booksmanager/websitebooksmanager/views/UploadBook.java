@@ -45,6 +45,7 @@ public class UploadBook extends Div implements HasUrlParameter<String> {
     @Override
     public void setParameter(BeforeEvent event, @OptionalParameter String parameter) {
         this.removeAll();
+        setClassName("metadata-box");
 
         List<String> pathList = event.getLocation()
                 .getQueryParameters()
@@ -71,8 +72,6 @@ public class UploadBook extends Div implements HasUrlParameter<String> {
             if (key.equals("outline")) return; // Don't make the TOC editable in a text field
 
             HorizontalLayout row = new HorizontalLayout();
-            row.setWidthFull();
-            row.setAlignItems(FlexComponent.Alignment.CENTER);
 
             Component inputField;
 
