@@ -4,10 +4,7 @@ import com.booksmanager.websitebooksmanager.CloudFlare.CloudflareR2Client;
 import com.vaadin.flow.component.UI;
 import com.vaadin.flow.component.button.Button;
 import com.vaadin.flow.component.dependency.StyleSheet;
-import com.vaadin.flow.component.html.Div;
-import com.vaadin.flow.component.html.H2;
-import com.vaadin.flow.component.html.H3;
-import com.vaadin.flow.component.html.Paragraph;
+import com.vaadin.flow.component.html.*;
 import com.vaadin.flow.component.orderedlayout.HorizontalLayout;
 import com.vaadin.flow.component.treegrid.TreeGrid;
 import com.vaadin.flow.data.provider.hierarchy.TreeData;
@@ -63,12 +60,12 @@ public class BookDirectory extends Div implements BeforeEnterObserver {
             paper.setClassName("paper-sheet");
 
             // Extract fields
-            String title = bookNode.get("title").asText();
-            String filename = bookNode.get("filename").asText();
-            String category = bookNode.get("category").asText();
-            String level = bookNode.get("level").asText();
-            String type = bookNode.get("type").asText();
-            String format = bookNode.get("format").asText();
+            String title = bookNode.get("Title").asString();
+            String filename = bookNode.get("filename").asString();
+            String category = bookNode.get("category").asString();
+            String level = bookNode.get("level").asString();
+            String type = bookNode.get("type").asString();
+            String format = bookNode.get("format").asString();
 
 
 
@@ -139,7 +136,7 @@ public class BookDirectory extends Div implements BeforeEnterObserver {
             add(paper);
 
         } catch (IOException e) {
-            add(new Div(new com.vaadin.flow.component.html.Span("Metadata unavailable: " + e.getMessage())));
+            add(new Div(new Span("Metadata unavailable: " + e.getMessage())));
         }
 
 
@@ -156,9 +153,9 @@ public class BookDirectory extends Div implements BeforeEnterObserver {
     private Div createDetailRow(String label, String value) {
         Div row = new Div();
         row.setClassName("detail-row");
-        com.vaadin.flow.component.html.Span sLabel = new com.vaadin.flow.component.html.Span(label + ": ");
+        Span sLabel = new Span(label + ": ");
         sLabel.setClassName("detail-label");
-        com.vaadin.flow.component.html.Span sValue = new com.vaadin.flow.component.html.Span(value);
+        Span sValue = new Span(value);
         sValue.setClassName("detail-value");
         row.add(sLabel, sValue);
         return row;

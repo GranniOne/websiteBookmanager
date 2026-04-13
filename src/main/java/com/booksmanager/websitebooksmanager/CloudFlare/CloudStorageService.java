@@ -24,6 +24,7 @@ import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
+import java.util.function.Supplier;
 
 @Service
 public class CloudStorageService {
@@ -58,7 +59,8 @@ public class CloudStorageService {
             // We replace underscores with spaces to make it a "Title".
             String title = baseName.replace("_", " ");
 
-
+            System.out.println(cleanFileName);
+            metadata.put("folderName", title);
             metadata.put("filename", cleanFileName);
             metadata.put("category", category);
             metadata.put("topics", new String[]{});
@@ -68,38 +70,36 @@ public class CloudStorageService {
             // Use PDFBox to get the actual page count
             try {
                 metadata.put("pages", document.getNumberOfPages());
-                document.getDocumentInformation().getMetadataKeys().forEach(event -> {
-                    switch (event) {
-                        case "Author":
-                            metadata.put(event, document.getDocumentInformation().getAuthor() == null ? event :  document.getDocumentInformation().getAuthor());
-                            break;
-                        case "CreationDate":
-                            metadata.put(event, document.getDocumentInformation().getCreationDate() == null ? event :  document.getDocumentInformation().getCreationDate());
-                            break;
-                        case "Creator":
-                            metadata.put(event, document.getDocumentInformation().getCreator() == null ? event :  document.getDocumentInformation().getCreator());
-                            break;
-                        case "KeyWords":
-                            metadata.put(event, document.getDocumentInformation().getKeywords() ==  null ? event :  document.getDocumentInformation().getKeywords());
-                            break;
-                        case "ModDate":
-                            metadata.put(event, document.getDocumentInformation().getModificationDate() ==  null ? event :  document.getDocumentInformation().getModificationDate());
-                            break;
-                        case "Producer":
-                            metadata.put(event, document.getDocumentInformation().getProducer() ==  null ? event :  document.getDocumentInformation().getProducer());
-                            break;
-                        case "Subject":
-                            metadata.put(event, document.getDocumentInformation().getSubject() ==   null ? event :  document.getDocumentInformation().getSubject());
-                            break;
-                        case "Title":
-                            if(title.equals(event)){
-                                metadata.put(event, document.getDocumentInformation().getTitle() ==    null ? event :  document.getDocumentInformation().getTitle());
-                            }else {
-                                document.getDocumentInformation().setTitle(title);
-                                metadata.put(event, document.getDocumentInformation().getTitle() ==    null ? event :  document.getDocumentInformation().getTitle());
+                PDDocumentInformation info = document.getDocumentInformation();
+
+                List<String> standardKeys = List.of(
+                        "Author", "Title", "Subject", "Keywords",
+                        "Creator", "Producer", "CreationDate", "ModDate"
+                );
+
+
+                standardKeys.forEach(key -> {
+                    Object value = switch (key) {
+                        case "Author" -> info.getAuthor();
+                        case "CreationDate" -> info.getCreationDate();
+                        case "Creator" -> info.getCreator();
+                        case "Keywords" -> info.getKeywords();
+                        case "ModDate" -> info.getModificationDate();
+                        case "Producer" -> info.getProducer();
+                        case "Subject" -> info.getSubject();
+                        case "Title" -> {
+                            // Your custom Title logic
+                            if (info.getTitle() == null) {
+                                info.setTitle(title); // Sets it in the PDF object
                             }
-                            break;
-                    }});
+                            yield info.getTitle();
+                        }
+                        default -> null;
+                    };
+
+
+                    metadata.put(key, value != null ? value : key);
+                });
 
                 PDDocumentOutline documentOutline = document.getDocumentCatalog().getDocumentOutline();
 

@@ -111,7 +111,7 @@ public class UploadBook extends Div implements HasUrlParameter<String> {
 
 
         // 3. PATHING: Define the cloud folder based on discovery
-        String folderKey = "books/" + (String) metadataMap.get("title") + "/";
+        String folderKey = "books/" + (String) metadataMap.get("folderName") + "/";
         String bucket = "bookmanager";
 
 
@@ -123,13 +123,11 @@ public class UploadBook extends Div implements HasUrlParameter<String> {
         add(image);
 
 
-
-
-
-
-        /*        // 5.UPLOADS
+        System.out.println(metadataMap.get("filename"));
+        System.out.println(folderKey);
+        // 5.UPLOADS
         //PDF: Key uses the discovered identity
-        this.cloudflareR2Client.putObject(bucket, folderKey + originalFileName, securePath);
+        this.cloudflareR2Client.putObject(bucket, folderKey + metadataMap.get("filename"), securePath);
 
         //JSON: metadata.json
         this.cloudflareR2Client.putObject(bucket, folderKey + "meta.json", jsonMetadata);
@@ -143,7 +141,7 @@ public class UploadBook extends Div implements HasUrlParameter<String> {
         try { Files.deleteIfExists(securePath); } catch (IOException ignored) {}
 
 
-         */
+
 
 
 
