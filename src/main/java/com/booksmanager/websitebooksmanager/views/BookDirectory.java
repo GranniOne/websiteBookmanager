@@ -60,15 +60,43 @@ public class BookDirectory extends Div implements BeforeEnterObserver {
             paper.setClassName("paper-sheet");
 
             // Extract fields
-            String title = bookNode.get("Title").asString();
-            String filename = bookNode.get("filename").asString();
-            String category = bookNode.get("category").asString();
-            String level = bookNode.get("level").asString();
-            String type = bookNode.get("type").asString();
-            String format = bookNode.get("format").asString();
+            String title;
+            String filename;
+            String category;
+            String level;
+            String type;
+            String format;
 
-
-
+            try {
+                title = bookNode.get("Title").asString();
+            } catch (Exception e) {
+                title = "";
+            }
+            try {
+                filename = bookNode.get("filename").asString();
+            } catch (Exception e) {
+                filename = "";
+            }
+            try {
+                category = bookNode.get("category").asString();
+            } catch (Exception e) {
+                category = "";
+            }
+            try {
+                level = bookNode.get("level").asString();
+            } catch (Exception e) {
+                level = "";
+            }
+            try {
+                type = bookNode.get("type").asString();
+            } catch (Exception e) {
+                type = "";
+            }
+            try {
+                format = bookNode.get("format").asString();
+            } catch (Exception e) {
+                format = "";
+            }
 
 
             JsonNode topicsNode = bookNode.get("topics");
@@ -122,12 +150,12 @@ public class BookDirectory extends Div implements BeforeEnterObserver {
             treeGrid.setAllRowsVisible(true);
             paper.add(treeGrid);
             // View Action
+            String finalFilename = filename;
             Button viewButton = new Button("Open Volume", e -> {
                 UI.getCurrent().navigate(
                         SelectedBookView.class,
                         new RouteParameters(Map.of(
-                                "bookDirectory", directory.replace("%20"," "),"book",filename
-                        ))
+                                "bookDirectory", directory.replace("%20"," "),"book", finalFilename))
                 );
             });
             viewButton.setClassName("book-button");
