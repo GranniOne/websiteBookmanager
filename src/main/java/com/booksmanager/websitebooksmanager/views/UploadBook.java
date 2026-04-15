@@ -125,6 +125,8 @@ public class UploadBook extends Div implements HasUrlParameter<String> {
 
         System.out.println(metadataMap.get("filename"));
         System.out.println(folderKey);
+
+        /*
         // 5.UPLOADS
         //PDF: Key uses the discovered identity
         this.cloudflareR2Client.putObject(bucket, folderKey + metadataMap.get("filename"), securePath);
@@ -148,6 +150,8 @@ public class UploadBook extends Div implements HasUrlParameter<String> {
 
         // Now the UI knows!
         Notification.show("Archived: " + metadataMap.get("title"));
+
+         */
 
     }
 }
