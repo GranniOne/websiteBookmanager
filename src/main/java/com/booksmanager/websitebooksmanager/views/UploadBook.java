@@ -17,6 +17,7 @@ import com.vaadin.flow.component.textfield.NumberField;
 import com.vaadin.flow.component.textfield.TextField;
 import com.vaadin.flow.dom.Style;
 import com.vaadin.flow.router.*;
+import com.vaadin.flow.server.VaadinSession;
 import org.springframework.beans.factory.annotation.Value;
 
 
@@ -45,6 +46,69 @@ public class UploadBook extends Div implements HasUrlParameter<String> {
     @Override
     public void setParameter(BeforeEvent event, @OptionalParameter String parameter) {
         this.removeAll();
+
+        // Unpacking the suitcase
+        Map<String, Object> map = (Map<String, Object>)
+                VaadinSession.getCurrent().getAttribute("pendingMetadata");
+
+        byte[] thumb = (byte[])
+                VaadinSession.getCurrent().getAttribute("pendingThumbnail");
+
+        if (map != null) {
+            // Now you have all the data to fill your TextFields!
+            add(new Span(map.get("Title").toString()));
+            add(new Image(thumb, "hello"));
+
+        }
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+        /*
         setClassName("metadata-box");
 
         List<String> pathList = event.getLocation()
@@ -152,6 +216,7 @@ public class UploadBook extends Div implements HasUrlParameter<String> {
         Notification.show("Archived: " + metadataMap.get("title"));
 
          */
+
 
     }
 }

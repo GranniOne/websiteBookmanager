@@ -41,12 +41,12 @@ public class CloudStorageService {
     }
 
 
-    public Map<String, Object> createMetaDataMap(Path path, String category, String level) {
-        try (PDDocument document = Loader.loadPDF(path.toFile())) {
+    public Map<String, Object> createMetaDataMap(File file, String category, String level) {
+        try (PDDocument document = Loader.loadPDF(file)) {
             Map<String, Object> metadata = new HashMap<>();
 
             // 1. Extract the raw temp name (e.g., Volume8_Issue2_Paper12_2024.pdf591875.tmp)
-            String rawTempName = path.getFileName().toString();
+            String rawTempName = file.getName();
 
             // 2. CLEANING SURGERY:
             // Get everything before the first ".pdf"
@@ -118,7 +118,7 @@ public class CloudStorageService {
 
             return metadata;
         } catch (Exception e) {
-            throw new RuntimeException("Failed to analyze PDF at " + path, e);
+            throw new RuntimeException("Failed to analyze PDF at " + file, e);
         }
     }
 
@@ -131,8 +131,8 @@ public class CloudStorageService {
     }
 
     // Your existing thumbnail logic works perfectly!
-    public byte[] generateThumbnailFromPath(Path localFilePath) {
-        try (PDDocument document = Loader.loadPDF(localFilePath.toFile())) {
+    public byte[] generateThumbnailFromPath(File file) {
+        try (PDDocument document = Loader.loadPDF(file)) {
             PDFRenderer pdfRenderer = new PDFRenderer(document);
             BufferedImage bim = pdfRenderer.renderImageWithDPI(0, 72);
             ByteArrayOutputStream baos = new ByteArrayOutputStream();
