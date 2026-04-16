@@ -87,7 +87,7 @@ public class HomeView extends Div {
 
 
         // 1. Initialize constants and state before the handler
-        final long bytesPerSecondLimit = 250 * 102400; // 250 KB/s
+        final long bytesPerSecondLimit = 250 * 1024; // 250 KB/s
 
         // We use a 1-element array so we can 'reset' it inside whenStart if needed
         final long[] startTime = {0L};

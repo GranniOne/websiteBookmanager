@@ -2,8 +2,11 @@ package com.booksmanager.websitebooksmanager.CloudFlare;
 
 import com.vaadin.flow.component.html.Image;
 import org.apache.pdfbox.Loader;
+import org.apache.pdfbox.cos.COSDictionary;
+import org.apache.pdfbox.cos.COSObject;
 import org.apache.pdfbox.pdmodel.PDDocument;
 import org.apache.pdfbox.pdmodel.PDDocumentInformation;
+import org.apache.pdfbox.pdmodel.PDPage;
 import org.apache.pdfbox.pdmodel.interactive.documentnavigation.outline.PDDocumentOutline;
 import org.apache.pdfbox.pdmodel.interactive.documentnavigation.outline.PDOutlineItem;
 import org.apache.pdfbox.pdmodel.interactive.documentnavigation.outline.PDOutlineNode;
@@ -112,7 +115,7 @@ public class CloudStorageService {
             }catch (Exception e){
 
             }
-
+            document.getDocument().getXrefTable().forEach((key, value) -> System.out.println(key + ":    \n " + value));
 
             //printDeepMetadata(metadata);
 
