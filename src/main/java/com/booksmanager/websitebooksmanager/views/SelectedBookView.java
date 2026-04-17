@@ -2,7 +2,10 @@ package com.booksmanager.websitebooksmanager.views;
 
 import com.booksmanager.websitebooksmanager.CloudFlare.CloudFlareService;
 import com.booksmanager.websitebooksmanager.CloudFlare.CloudflareR2Client;
+import com.booksmanager.websitebooksmanager.Layout.EmbedPdfViewer;
+import com.vaadin.flow.component.html.Div;
 import com.vaadin.flow.component.html.IFrame;
+import com.vaadin.flow.dom.Style;
 import com.vaadin.flow.router.BeforeEnterEvent;
 import com.vaadin.flow.router.BeforeEnterObserver;
 import com.vaadin.flow.router.Route;
@@ -11,7 +14,7 @@ import software.amazon.awssdk.core.ResponseInputStream;
 
 
 @Route("/books/:bookDirectory/:book")
-public class SelectedBookView extends IFrame implements BeforeEnterObserver {
+public class SelectedBookView extends Div implements BeforeEnterObserver {
 
     final CloudflareR2Client cloudflareR2Client;
     final CloudFlareService cloudflareService;
@@ -28,7 +31,7 @@ public class SelectedBookView extends IFrame implements BeforeEnterObserver {
         this.getStyle()
                 .set("border", "none")
                 .set("overflow", "hidden")
-                .set("display", "block"); // ensures iframe behaves like a block elemen
+                .set("display", "flex").setJustifyContent(Style.JustifyContent.CENTER); // ensures iframe behaves like a block elemen
     }
 
 
@@ -42,9 +45,11 @@ public class SelectedBookView extends IFrame implements BeforeEnterObserver {
         // We encode the parts so spaces ("%20") don't break the URL
 
         String src = "/api/pdf/" + directory + "/" + book;
+        add(new EmbedPdfViewer(src));
 
 
-        this.setSrc(src);
+
+
     }
 
 
