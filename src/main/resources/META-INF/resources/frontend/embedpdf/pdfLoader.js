@@ -1,6 +1,6 @@
 import EmbedPDF from './embedpdf.js';
 
-export async function init() {
+export async function init(element, source) {
     const brandColors = [
         {
             name: 'Purple',
@@ -102,7 +102,7 @@ export async function init() {
     const viewer = EmbedPDF.init({
         type: 'container',
         target: viewerElement,
-        src: 'https://snippet.embedpdf.com/ebook.pdf',
+        src: source,
         theme: buildTheme(selectedColor, selectedMode),
     });
     const registry = await viewer.registry;

@@ -130,9 +130,9 @@ public class EmbedPdfViewer extends Div {
             getElement().executeJs("""
             (async () => {
                 const m = await import('/frontend/embedpdf/pdfLoader.js');
-                m.init(this);
-            })();
-        """);
+                m.init(this,$0);
+            })($0);
+        """,src);
         });
     }
 }
