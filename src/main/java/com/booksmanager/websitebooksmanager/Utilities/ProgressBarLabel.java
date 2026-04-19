@@ -10,8 +10,9 @@ import com.vaadin.flow.theme.Theme;
 import com.vaadin.flow.theme.aura.Aura;
 import com.vaadin.flow.theme.lumo.Lumo;
 import com.vaadin.flow.theme.lumo.LumoUtility;
+import jakarta.annotation.security.PermitAll;
 
-
+@PermitAll
 @StyleSheet(Lumo.STYLESHEET)
 public class ProgressBarLabel extends Div {
     private final ProgressBar progressBar;

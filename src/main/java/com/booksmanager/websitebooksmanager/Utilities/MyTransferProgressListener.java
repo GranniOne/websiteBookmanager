@@ -4,9 +4,12 @@ import com.vaadin.flow.component.UI;
 import com.vaadin.flow.component.progressbar.ProgressBar;
 import com.vaadin.flow.server.streams.TransferContext;
 import com.vaadin.flow.server.streams.TransferProgressListener;
+import jakarta.annotation.security.PermitAll;
 
 import java.io.IOException;
 
+
+@PermitAll
 public class MyTransferProgressListener implements TransferProgressListener {
     private final ProgressBar progressBar;
 

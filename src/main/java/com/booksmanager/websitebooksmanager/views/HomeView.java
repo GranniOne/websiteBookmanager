@@ -3,35 +3,28 @@ package com.booksmanager.websitebooksmanager.views;
 import com.booksmanager.websitebooksmanager.CloudFlare.CloudFlareService;
 import com.booksmanager.websitebooksmanager.CloudFlare.CloudStorageService;
 import com.booksmanager.websitebooksmanager.CloudFlare.CloudflareR2Client;
-import com.booksmanager.websitebooksmanager.Utilities.MyTransferProgressListener;
 import com.booksmanager.websitebooksmanager.Utilities.ProgressBarLabel;
 import com.vaadin.flow.component.UI;
 import com.vaadin.flow.component.button.Button;
 import com.vaadin.flow.component.dependency.StyleSheet;
 import com.vaadin.flow.component.html.Div;
 import com.vaadin.flow.component.html.H1;
-import com.vaadin.flow.component.html.NativeLabel;
 import com.vaadin.flow.component.html.Paragraph;
 import com.vaadin.flow.component.icon.VaadinIcon;
 import com.vaadin.flow.component.orderedlayout.HorizontalLayout;
 import com.vaadin.flow.component.orderedlayout.VerticalLayout;
-import com.vaadin.flow.component.page.Push;
-import com.vaadin.flow.component.progressbar.ProgressBar;
 import com.vaadin.flow.component.upload.Upload;
-import com.vaadin.flow.router.QueryParameters;
 import com.vaadin.flow.router.Route;
-import com.vaadin.flow.router.RouteParameters;
 import com.vaadin.flow.server.VaadinSession;
 import com.vaadin.flow.server.streams.*;
+import jakarta.annotation.security.PermitAll;
 import org.jspecify.annotations.NonNull;
 
 import java.io.File;
-import java.io.IOException;
-import java.nio.file.Files;
-import java.nio.file.Path;
 import java.util.Map;
 import java.util.concurrent.CompletableFuture;
 
+@PermitAll
 @StyleSheet("styles.css")
 @Route("")
 public class HomeView extends Div {
@@ -87,7 +80,7 @@ public class HomeView extends Div {
 
 
         // 1. Initialize constants and state before the handler
-        final long bytesPerSecondLimit = 250 * 1024; // 250 KB/s
+        final long bytesPerSecondLimit = 250 * 1024000; // 250 KB/s
 
         // We use a 1-element array so we can 'reset' it inside whenStart if needed
         final long[] startTime = {0L};
@@ -101,7 +94,7 @@ public class HomeView extends Div {
 
 
             CompletableFuture.runAsync(() -> {
-                SuccesForFileUpload(pb, metadata, file, ui);
+                SuccessForFileUpload(pb, metadata, file, ui);
             });
             //UI.getCurrent().navigate(UploadBook.class,QueryParameters.simple(Map.of("file", file.getAbsolutePath())));
 
@@ -154,9 +147,7 @@ public class HomeView extends Div {
 
                 },bytesPerSecondLimit / 50)
                 .whenComplete((context,success) -> {
-                    System.out.println("success");
-
-                    //pb.setVisible(false);
+                    
                 });
 
 
@@ -166,7 +157,7 @@ public class HomeView extends Div {
         return upload;
     }
 
-    private void SuccesForFileUpload(ProgressBarLabel pb,UploadMetadata metadata, File file, UI ui){
+    private void SuccessForFileUpload(ProgressBarLabel pb, UploadMetadata metadata, File file, UI ui){
         try {
             String bucket = "bookmanager";
 
@@ -188,15 +179,14 @@ public class HomeView extends Div {
             if (thumbnail != null) {
                 cloudflareR2Client.putObject(bucket, folderKey + "cover.jpg", thumbnail);
             }
-            System.out.println(thumbnail.length);
 
             // 5. SESSION HANDOFF: Store the map so the next view can edit it
             ui.access(() -> {
                 VaadinSession.getCurrent().setAttribute("pendingMetadata", metadataMap);
-                VaadinSession.getCurrent().setAttribute("pendingThumbnail", thumbnail);
+
 
                 pb.getProgressBar().setIndeterminate(false);
-                ui.navigate(UploadBook.class);
+                //ui.navigate(UploadBook.class);
             });
             pb.getProgressBar().setIndeterminate(false);
             // 6. FINISH: Navigate to the editor

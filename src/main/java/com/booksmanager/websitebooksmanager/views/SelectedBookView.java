@@ -10,9 +10,10 @@ import com.vaadin.flow.router.BeforeEnterEvent;
 import com.vaadin.flow.router.BeforeEnterObserver;
 import com.vaadin.flow.router.Route;
 import com.vaadin.flow.router.RouteParameters;
+import jakarta.annotation.security.PermitAll;
 import software.amazon.awssdk.core.ResponseInputStream;
 
-
+@PermitAll
 @Route("/books/:bookDirectory/:book")
 public class SelectedBookView extends Div implements BeforeEnterObserver {
 

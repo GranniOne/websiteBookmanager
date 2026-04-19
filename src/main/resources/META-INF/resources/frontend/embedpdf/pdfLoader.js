@@ -42,7 +42,7 @@ export async function init(element, source) {
 
     const toolBar = document.getElementById('toolbar-id');
     Object.assign(toolBar.style, {
-        display: "flex",
+        display: "none",
         flexDirection: "column",
         gap: "12px",
         padding: "16px",
@@ -54,6 +54,7 @@ export async function init(element, source) {
         width: "fit-content",
         marginTop: "12px",
         marginBottom: "12px",
+
     });
 
     // Ensure children (the rows) are flex containers

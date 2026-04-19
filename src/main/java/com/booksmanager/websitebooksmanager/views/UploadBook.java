@@ -18,6 +18,7 @@ import com.vaadin.flow.component.textfield.TextField;
 import com.vaadin.flow.dom.Style;
 import com.vaadin.flow.router.*;
 import com.vaadin.flow.server.VaadinSession;
+import jakarta.annotation.security.PermitAll;
 import org.springframework.beans.factory.annotation.Value;
 
 
@@ -30,6 +31,7 @@ import java.text.DateFormat;
 import java.time.ZoneId;
 import java.util.*;
 
+@PermitAll
 @Route("upload")
 public class UploadBook extends Div implements HasUrlParameter<String> {
     final CloudStorageService cloudStorageService;
@@ -51,15 +53,7 @@ public class UploadBook extends Div implements HasUrlParameter<String> {
         Map<String, Object> map = (Map<String, Object>)
                 VaadinSession.getCurrent().getAttribute("pendingMetadata");
 
-        byte[] thumb = (byte[])
-                VaadinSession.getCurrent().getAttribute("pendingThumbnail");
 
-        if (map != null) {
-            // Now you have all the data to fill your TextFields!
-            add(new Span(map.get("Title").toString()));
-            add(new Image(thumb, "hello"));
-
-        }
 
 
 

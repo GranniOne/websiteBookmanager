@@ -13,6 +13,7 @@ import com.vaadin.flow.router.BeforeEnterEvent;
 import com.vaadin.flow.router.BeforeEnterObserver;
 import com.vaadin.flow.router.Route;
 import com.vaadin.flow.router.RouteParameters;
+import jakarta.annotation.security.PermitAll;
 import software.amazon.awssdk.core.ResponseInputStream;
 
 import tools.jackson.databind.JsonNode;
@@ -24,6 +25,7 @@ import java.util.Iterator;
 import java.util.List;
 import java.util.Map;
 
+@PermitAll
 @StyleSheet("pdfprofilestyle.css")
 @Route("/books/:bookDirectory")
 public class BookDirectory extends Div implements BeforeEnterObserver {

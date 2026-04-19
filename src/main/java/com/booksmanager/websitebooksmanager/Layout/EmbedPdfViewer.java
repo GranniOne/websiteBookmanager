@@ -65,6 +65,8 @@ public class EmbedPdfViewer extends Div {
 
         add(toolBar, viewer);
 
+
+
          /*
         setSizeFull();
         getStyle().set("padding", "0");
