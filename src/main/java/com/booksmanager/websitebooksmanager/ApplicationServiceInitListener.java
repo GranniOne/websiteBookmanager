@@ -3,6 +3,7 @@ package com.booksmanager.websitebooksmanager;
 import com.booksmanager.websitebooksmanager.CloudFlare.CloudflareR2Client;
 import com.vaadin.flow.server.ServiceInitEvent;
 import com.vaadin.flow.server.VaadinServiceInitListener;
+import org.slf4j.LoggerFactory;
 import org.springframework.stereotype.Component;
 
 @Component
@@ -32,8 +33,7 @@ public class ApplicationServiceInitListener implements VaadinServiceInitListener
         });
 
         event.getSource().addSessionInitListener(sessionInitEvent -> {
-            r2Client.hello();
-
+            LoggerFactory.getLogger(getClass()).info("A new Session has been initialized! " + "ip: " + sessionInitEvent.getSession().getBrowser().getAddress() + " Browser:  " + sessionInitEvent.getSession().getBrowser().getUserAgent());
 
 
         });

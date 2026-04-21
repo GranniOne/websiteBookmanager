@@ -1,0 +1,8 @@
+
+vaadin-login-form{
+    border-radius: 20px;
+}
+
+vaadin-login-form::part(form){
+    border-radius: 20px;
+}
