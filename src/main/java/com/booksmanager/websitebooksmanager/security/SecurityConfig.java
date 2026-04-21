@@ -12,6 +12,8 @@ import org.springframework.security.config.annotation.web.configuration.EnableWe
 import org.springframework.security.core.userdetails.User;
 import org.springframework.security.core.userdetails.UserDetails;
 import org.springframework.security.core.userdetails.UserDetailsService;
+import org.springframework.security.crypto.bcrypt.BCryptPasswordEncoder;
+import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.security.provisioning.InMemoryUserDetailsManager;
 import org.springframework.security.web.SecurityFilterChain;
 
@@ -45,13 +47,18 @@ public class SecurityConfig {
 
     @Bean
     public UserDetailsService userDetailsService() {
-        UserDetails userDetails = User.withDefaultPasswordEncoder()
-                .username("appUser")
-                .password("Vaadin#Secure42")
+        UserDetails userDetails = User
+                .withUsername("appUser")
+                .password("$2a$12$f9Rvu07Oog7kUM7MLTlWl.5gV6ANrO8VgAJjU1lh83bKbJ9SXmb0K") // Vaadin#Secure42
                 .roles("USER")
                 .build();
 
         return new InMemoryUserDetailsManager(userDetails);
+    }
+
+    @Bean
+    PasswordEncoder getPasswordEncoder() {
+        return new BCryptPasswordEncoder();
     }
 
 }
