@@ -38,3 +38,4 @@ node_modules/
 ### VS Code ###
 .vscode/
 /src/main/bundles/
+/src/main/resources/keystore.p12
