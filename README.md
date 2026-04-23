@@ -1,26 +1,34 @@
 # WebsiteBooksManager
 
-A Java-based web application for managing books, including features for uploading, storing, and organizing book data.
+A Java-based web application for managing books, including uploading, storing, and organizing book data with cloud storage integration.
 
-## Features
+---
+
+## 🚀 Features
 - Book management system
 - File upload support
-- Cloud storage integration (Cloudflare R2)
-- Modular project structure
+- Cloudflare R2 integration
+- Modular backend structure
+- HTTPS-enabled local deployment support
 
-## Tech Stack
+---
+
+## 🛠️ Tech Stack
 - Java
+- Spring Boot / Servlet-based backend
 - Maven
 - Cloudflare R2 (object storage)
-- Spring / Servlet-based backend (if applicable)
+- TLS/SSL (Cloudflare Origin Certificate)
 
-## Security Note
-Sensitive credentials are not stored in the repository.  
-Environment variables or external configuration files are used instead.
+---
 
-## Setup
-1. Clone the repo
-2. Configure environment variables for cloud services
-3. Build with Maven:
-   ```bash
-   mvn clean install
+## 🔐 Security & Configuration
+
+Sensitive credentials are not stored in this repository.
+
+The application uses environment variables for configuration:
+
+```properties
+cloudflare.accountId=${CLOUDFLARE_ACCOUNTID}
+cloudflare.accessKey=${CLOUDFLARE_ACCESSKEY}
+cloudflare.secretKey=${CLOUDFLARE_SECRETKEY}
