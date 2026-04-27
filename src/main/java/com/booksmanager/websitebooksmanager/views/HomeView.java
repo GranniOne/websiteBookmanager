@@ -4,20 +4,27 @@ import com.booksmanager.websitebooksmanager.CloudFlare.CloudFlareService;
 import com.booksmanager.websitebooksmanager.CloudFlare.CloudStorageService;
 import com.booksmanager.websitebooksmanager.CloudFlare.CloudflareR2Client;
 import com.booksmanager.websitebooksmanager.Utilities.ProgressBarLabel;
+import com.vaadin.flow.component.Text;
 import com.vaadin.flow.component.UI;
 import com.vaadin.flow.component.button.Button;
 import com.vaadin.flow.component.dependency.StyleSheet;
 import com.vaadin.flow.component.html.Div;
 import com.vaadin.flow.component.html.H1;
 import com.vaadin.flow.component.html.Paragraph;
+import com.vaadin.flow.component.icon.Icon;
 import com.vaadin.flow.component.icon.VaadinIcon;
+import com.vaadin.flow.component.notification.Notification;
+import com.vaadin.flow.component.notification.NotificationVariant;
+import com.vaadin.flow.component.orderedlayout.FlexComponent;
 import com.vaadin.flow.component.orderedlayout.HorizontalLayout;
 import com.vaadin.flow.component.orderedlayout.VerticalLayout;
 import com.vaadin.flow.component.upload.Upload;
+import com.vaadin.flow.component.upload.UploadFormat;
 import com.vaadin.flow.router.Route;
 import com.vaadin.flow.server.VaadinSession;
 import com.vaadin.flow.server.streams.*;
 import jakarta.annotation.security.PermitAll;
+import org.apache.tomcat.util.http.fileupload.UploadContext;
 import org.jspecify.annotations.NonNull;
 
 import java.io.File;
@@ -85,6 +92,12 @@ public class HomeView extends Div {
         // We use a 1-element array so we can 'reset' it inside whenStart if needed
         final long[] startTime = {0L};
         FileUploadCallback successHandler = (metadata, file) -> {
+
+
+            if(metadata.contentType().equals("application/pdf")){
+
+            }
+
             pb.getProgressBar().setValue(0);
             pb.getProgressBar().setIndeterminate(true);
             pb.getProgressBarLabelText().setText("Archiving to cloud...");
@@ -96,7 +109,9 @@ public class HomeView extends Div {
             CompletableFuture.runAsync(() -> {
                 SuccessForFileUpload(pb, metadata, file, ui);
             });
-            //UI.getCurrent().navigate(UploadBook.class,QueryParameters.simple(Map.of("file", file.getAbsolutePath())));
+            //
+
+
 
         };
 
@@ -108,7 +123,6 @@ public class HomeView extends Div {
                 .whenStart((starthandler) -> {
                     pb.getProgressBarLabelText().setText(starthandler.fileName());
                     pb.setVisible(true);
-                    System.out.println("it ran");
                     startTime[0] = System.currentTimeMillis();
 
                 })
@@ -130,9 +144,6 @@ public class HomeView extends Div {
                             }
                         }
                     }
-                    System.out.println("progress " + transferred + "/" + total);
-                    // 3. THE UI: Update the progress bar
-
                     if (total > 0) {
                         double progress = (double) transferred / total;
 
@@ -147,11 +158,15 @@ public class HomeView extends Div {
 
                 },bytesPerSecondLimit / 50)
                 .whenComplete((context,success) -> {
-                    
+                    Notification notification = success ? createSubmitSuccess() : createReportError();
+                    notification.open();
+
+
                 });
 
 
         Upload upload = new Upload(temporaryFileHandler);
+        upload.setAcceptedFileTypes("application/pdf", ".pdf");
         upload.setDropAllowed(false);
         upload.setUploadButton(uploadBtn);
         return upload;
@@ -204,5 +219,52 @@ public class HomeView extends Div {
         btn.addClassName("home-btn");
         btn.addClassName("btn-" + theme);
         return btn;
+    }
+    public Notification createSubmitSuccess() {
+        Notification notification = new Notification();
+        notification.addThemeVariants(NotificationVariant.SUCCESS);
+
+        Icon icon = VaadinIcon.CHECK_CIRCLE.create();
+
+        Button viewBtn = new Button("View");
+        Button closeButton = new CloseButton();
+        HorizontalLayout layout = new HorizontalLayout(icon,
+                new Text("Application submitted!"));
+        layout.addToEnd(viewBtn, closeButton);
+        layout.setAlignItems(FlexComponent.Alignment.CENTER);
+        layout.setMinWidth("350px");
+
+        notification.add(layout);
+
+        notification.setPosition(Notification.Position.TOP_CENTER);
+
+        return notification;
+    }
+    public Notification createReportError() {
+        Notification notification = new Notification();
+        notification.addThemeVariants(NotificationVariant.ERROR);
+
+        Icon icon = VaadinIcon.WARNING.create();
+        Button retryBtn = new Button("Retry");
+        Button closeButton = new CloseButton();
+
+        HorizontalLayout layout = new HorizontalLayout(icon,
+                new Text("Failed to generate report!"));
+        layout.addToEnd(retryBtn, closeButton);
+        layout.setAlignItems(FlexComponent.Alignment.CENTER);
+        layout.setMinWidth("350px");
+
+        notification.add(layout);
+        notification.setPosition(Notification.Position.TOP_CENTER);
+
+        return notification;
+    }
+
+    public class CloseButton extends Button {
+        public CloseButton() {
+            super(new Icon("lumo", "cross"));
+            setAriaLabel("Close");
+            addClickListener(e -> findAncestor(Notification.class).close());
+        }
     }
 }
