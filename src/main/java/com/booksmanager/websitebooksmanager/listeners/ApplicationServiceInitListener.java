@@ -1,4 +1,4 @@
-package com.booksmanager.websitebooksmanager;
+package com.booksmanager.websitebooksmanager.listeners;
 
 import com.booksmanager.websitebooksmanager.CloudFlare.CloudflareR2Client;
 import com.vaadin.flow.server.ServiceInitEvent;

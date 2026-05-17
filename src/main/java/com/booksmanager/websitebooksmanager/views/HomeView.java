@@ -3,7 +3,9 @@ package com.booksmanager.websitebooksmanager.views;
 import com.booksmanager.websitebooksmanager.CloudFlare.CloudFlareService;
 import com.booksmanager.websitebooksmanager.CloudFlare.CloudStorageService;
 import com.booksmanager.websitebooksmanager.CloudFlare.CloudflareR2Client;
-import com.booksmanager.websitebooksmanager.Utilities.ProgressBarLabel;
+import com.booksmanager.websitebooksmanager.Layout.ProgressBarLabel;
+import com.booksmanager.websitebooksmanager.epub.UnZipEpub;
+import com.booksmanager.websitebooksmanager.utilities.Utility;
 import com.vaadin.flow.component.Text;
 import com.vaadin.flow.component.UI;
 import com.vaadin.flow.component.button.Button;
@@ -19,15 +21,14 @@ import com.vaadin.flow.component.orderedlayout.FlexComponent;
 import com.vaadin.flow.component.orderedlayout.HorizontalLayout;
 import com.vaadin.flow.component.orderedlayout.VerticalLayout;
 import com.vaadin.flow.component.upload.Upload;
-import com.vaadin.flow.component.upload.UploadFormat;
 import com.vaadin.flow.router.Route;
 import com.vaadin.flow.server.VaadinSession;
 import com.vaadin.flow.server.streams.*;
 import jakarta.annotation.security.PermitAll;
-import org.apache.tomcat.util.http.fileupload.UploadContext;
 import org.jspecify.annotations.NonNull;
 
 import java.io.File;
+import java.io.IOException;
 import java.util.Map;
 import java.util.concurrent.CompletableFuture;
 
@@ -94,23 +95,40 @@ public class HomeView extends Div {
         FileUploadCallback successHandler = (metadata, file) -> {
 
 
+
             if(metadata.contentType().equals("application/pdf")){
+                pb.getProgressBar().setValue(0);
+                pb.getProgressBar().setIndeterminate(true);
+                pb.getProgressBarLabelText().setText("Archiving to cloud...");
+                System.out.println("Archiving to cloud...");
 
+                UI ui = UI.getCurrent();
+
+
+                CompletableFuture.runAsync(() -> {
+                    Utility.SuccessForFileUpload(pb, metadata, file, ui);
+                });
+            } else if (metadata.contentType().equals("application/epub+zip")) {
+                pb.getProgressBar().setValue(0);
+                pb.getProgressBar().setIndeterminate(true);
+                pb.getProgressBarLabelText().setText("Archiving to cloud...");
+                System.out.println("Archiving to cloud...");
+
+                UI ui = UI.getCurrent();
+
+
+                CompletableFuture.runAsync(() -> {
+                    try {
+                        UnZipEpub.UnzipFile(file);
+                    } catch (IOException e) {
+                        throw new RuntimeException(e);
+                    }
+                });
+            } else{
+                System.out.println("hellllooo");
+                Notification notification = createReportError("hello");
+                notification.open();
             }
-
-            pb.getProgressBar().setValue(0);
-            pb.getProgressBar().setIndeterminate(true);
-            pb.getProgressBarLabelText().setText("Archiving to cloud...");
-            System.out.println("Archiving to cloud...");
-
-            UI ui = UI.getCurrent();
-
-
-            CompletableFuture.runAsync(() -> {
-                SuccessForFileUpload(pb, metadata, file, ui);
-            });
-            //
-
 
 
         };
@@ -158,7 +176,7 @@ public class HomeView extends Div {
 
                 },bytesPerSecondLimit / 50)
                 .whenComplete((context,success) -> {
-                    Notification notification = success ? createSubmitSuccess() : createReportError();
+                    Notification notification = success ? createSubmitSuccess() : createReportError("Failed to generate report!");
                     notification.open();
 
 
@@ -166,53 +184,18 @@ public class HomeView extends Div {
 
 
         Upload upload = new Upload(temporaryFileHandler);
-        upload.setAcceptedFileTypes("application/pdf", ".pdf");
+        upload.setAcceptedFileTypes("application/pdf", ".pdf","application/epub+zip", ".epub");
         upload.setDropAllowed(false);
         upload.setUploadButton(uploadBtn);
+        upload.addFileRejectedListener(event -> {
+
+            Notification notification = createReportError(event.getFileName() + " " + event.getErrorMessage() + " must be of PDF type");
+            notification.open();
+        });
         return upload;
     }
 
-    private void SuccessForFileUpload(ProgressBarLabel pb, UploadMetadata metadata, File file, UI ui){
-        try {
-            String bucket = "bookmanager";
 
-            // 1. DISCOVERY: Extract metadata from the file
-            // We do this while the user is still on the original page
-            Map<String, Object> metadataMap = cloudStorageService.createMetaDataMap(
-                    file, "programming", "intermediate"
-            );
-
-            // 2. GENERATION: Prepare assets
-            byte[] thumbnail = cloudStorageService.generateThumbnailFromPath(file);
-            String jsonMetadata = cloudStorageService.convertMapToJson(metadataMap);
-            String folderKey = "books/" + metadataMap.get("folderName") + "/";
-
-            // 3. UPLOAD: Send everything to Cloudflare R2
-            cloudflareR2Client.putObject(bucket, folderKey + metadataMap.get("filename"), file);
-            cloudflareR2Client.putObject(bucket, folderKey + "meta.json", jsonMetadata);
-
-            if (thumbnail != null) {
-                cloudflareR2Client.putObject(bucket, folderKey + "cover.jpg", thumbnail);
-            }
-
-            // 5. SESSION HANDOFF: Store the map so the next view can edit it
-            ui.access(() -> {
-                VaadinSession.getCurrent().setAttribute("pendingMetadata", metadataMap);
-
-
-                pb.getProgressBar().setIndeterminate(false);
-                //ui.navigate(UploadBook.class);
-            });
-            pb.getProgressBar().setIndeterminate(false);
-            // 6. FINISH: Navigate to the editor
-            //getUI().ifPresent(ui -> ui.navigate(UploadBook.class));
-        }catch (Exception e) {
-            ui.access(() -> {
-                pb.getProgressBar().setIndeterminate(false);
-                pb.getProgressBarLabelText().setText("Upload failed: " + e.getMessage());
-            });
-        }
-    }
 
     private Button createMenuButton(String text, VaadinIcon icon, String theme) {
         Button btn = new Button(text, icon.create());
@@ -240,16 +223,16 @@ public class HomeView extends Div {
 
         return notification;
     }
-    public Notification createReportError() {
+    public Notification createReportError(String errorMessage) {
         Notification notification = new Notification();
         notification.addThemeVariants(NotificationVariant.ERROR);
 
         Icon icon = VaadinIcon.WARNING.create();
         Button retryBtn = new Button("Retry");
         Button closeButton = new CloseButton();
+        HorizontalLayout layout = new HorizontalLayout(icon, new Text(errorMessage));
 
-        HorizontalLayout layout = new HorizontalLayout(icon,
-                new Text("Failed to generate report!"));
+
         layout.addToEnd(retryBtn, closeButton);
         layout.setAlignItems(FlexComponent.Alignment.CENTER);
         layout.setMinWidth("350px");
