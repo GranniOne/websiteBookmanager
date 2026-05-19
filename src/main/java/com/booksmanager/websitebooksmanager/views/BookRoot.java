@@ -48,6 +48,7 @@ public class BookRoot extends Div {
         List<String> pdfPaths = new ArrayList<>();
 
         allObjects.forEach(obj -> {
+            System.out.println(obj.toString());
             String key = obj.key();
             if (key.endsWith(".jpg")) {
                 String dir = key.substring(0, key.lastIndexOf("/") + 1);
@@ -63,10 +64,10 @@ public class BookRoot extends Div {
             String coverKey = directoryToCover.get(dir);
 
             if (coverKey != null) {
-                String bookName = dir.substring(dir.indexOf("/") + 1).replace("/", "");
+                String bookName = dir.substring(dir.indexOf("/") + 1,  dir.length() - 1);
 
                 // Create the URL to our proxy controller
-                String imageUrl = "/api/books/cover?key=" + java.net.URLEncoder.encode(coverKey, java.nio.charset.StandardCharsets.UTF_8);
+                String imageUrl = "/api/books/" + bookName + "/cover";
 
                 // Pass the URL string to the card
                 CardLayout card = new CardLayout(bookName, imageUrl);
@@ -74,8 +75,8 @@ public class BookRoot extends Div {
                 System.out.println("hellooo");
                 card.getElement().addEventListener("click", event -> {
                     System.out.println("Clicked on " + coverKey);
-                    String routePath = dir.substring(dir.indexOf("/") + 1);
-                    if(routePath.endsWith("/")) routePath = routePath.substring(0, routePath.length()-1);
+                    String routePath = bookName;
+                    if(routePath.endsWith("/")) routePath = routePath.substring(0, routePath.length());
                     UI.getCurrent().navigate(BookDirectory.class, new RouteParameters("bookDirectory", routePath));
                 });
 

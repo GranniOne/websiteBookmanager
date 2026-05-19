@@ -3,15 +3,14 @@ package com.booksmanager.websitebooksmanager.controllers;
 import com.booksmanager.websitebooksmanager.CloudFlare.CloudflareR2Client;
 import jakarta.annotation.security.PermitAll;
 import jakarta.servlet.http.HttpServletResponse;
-import org.springframework.web.bind.annotation.GetMapping;
-import org.springframework.web.bind.annotation.PathVariable;
-import org.springframework.web.bind.annotation.RequestParam;
-import org.springframework.web.bind.annotation.RestController;
+import org.springframework.security.access.prepost.PreAuthorize;
+import org.springframework.web.bind.annotation.*;
 
 import java.io.IOException;
 import java.io.InputStream;
-@PermitAll
+
 @RestController
+@PreAuthorize("isAuthenticated()")
 public class BookStreamController {
 
     private final CloudflareR2Client cloudflareR2Client;
@@ -20,9 +19,10 @@ public class BookStreamController {
         this.cloudflareR2Client = cloudflareR2Client;
     }
 
-    @GetMapping("/api/books/cover")
-    public void getCover(@RequestParam String key, HttpServletResponse response) throws IOException {
-        System.out.println(key);
+    @GetMapping("/api/books/{bookId}/cover")
+    public void getCover(@PathVariable String bookId, HttpServletResponse response) throws IOException {
+        String key = "books/" + bookId + "/cover.jpg";
+        System.out.println("key: " + key);
         response.setContentType("image/jpeg");
         // Browsers will cache this locally, making the second visit "instant"
         response.setHeader("Cache-Control", "public, max-age=86400");
@@ -33,6 +33,7 @@ public class BookStreamController {
             response.setStatus(HttpServletResponse.SC_NOT_FOUND);
         }
     }
+
     @GetMapping("/api/pdf/{directory}/{filename}")
     public void streamPdf(@PathVariable String directory,
                           @PathVariable String filename,
