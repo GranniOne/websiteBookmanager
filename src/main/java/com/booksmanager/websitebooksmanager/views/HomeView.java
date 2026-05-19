@@ -106,7 +106,7 @@ public class HomeView extends Div {
 
 
                 CompletableFuture.runAsync(() -> {
-                    Utility.SuccessForFileUpload(pb, metadata, file, ui);
+                    this.SuccessForFileUpload(pb, metadata, file, ui);
                 });
             } else if (metadata.contentType().equals("application/epub+zip")) {
                 pb.getProgressBar().setValue(0);
@@ -119,7 +119,7 @@ public class HomeView extends Div {
 
                 CompletableFuture.runAsync(() -> {
                     try {
-                        UnZipEpub.UnzipFile(file);
+                        UnZipEpub.unzip(pb, metadata, file, ui);
                     } catch (IOException e) {
                         throw new RuntimeException(e);
                     }
@@ -241,6 +241,47 @@ public class HomeView extends Div {
         notification.setPosition(Notification.Position.TOP_CENTER);
 
         return notification;
+    }
+    private void SuccessForFileUpload(ProgressBarLabel pb, UploadMetadata metadata, File file, UI ui){
+        try {
+            String bucket = "bookmanager";
+
+            // 1. DISCOVERY: Extract metadata from the file
+            // We do this while the user is still on the original page
+            Map<String, Object> metadataMap = cloudStorageService.createMetaDataMap(
+                    file, "programming", "intermediate"
+            );
+
+            // 2. GENERATION: Prepare assets
+            byte[] thumbnail = cloudStorageService.generateThumbnailFromPath(file);
+            String jsonMetadata = cloudStorageService.convertMapToJson(metadataMap);
+            String folderKey = "books/" + metadataMap.get("folderName") + "/";
+
+            // 3. UPLOAD: Send everything to Cloudflare R2
+            cloudflareR2Client.putObject(bucket, folderKey + metadataMap.get("filename"), file);
+            cloudflareR2Client.putObject(bucket, folderKey + "meta.json", jsonMetadata);
+
+            if (thumbnail != null) {
+                cloudflareR2Client.putObject(bucket, folderKey + "cover.jpg", thumbnail);
+            }
+
+            // 5. SESSION HANDOFF: Store the map so the next view can edit it
+            ui.access(() -> {
+                VaadinSession.getCurrent().setAttribute("pendingMetadata", metadataMap);
+
+
+                pb.getProgressBar().setIndeterminate(false);
+                //ui.navigate(UploadBook.class);
+            });
+            pb.getProgressBar().setIndeterminate(false);
+            // 6. FINISH: Navigate to the editor
+            //getUI().ifPresent(ui -> ui.navigate(UploadBook.class));
+        }catch (Exception e) {
+            ui.access(() -> {
+                pb.getProgressBar().setIndeterminate(false);
+                pb.getProgressBarLabelText().setText("Upload failed: " + e.getMessage());
+            });
+        }
     }
 
     public class CloseButton extends Button {

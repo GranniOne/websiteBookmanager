@@ -1,5 +1,12 @@
 package com.booksmanager.websitebooksmanager.epub;
 
+import com.booksmanager.websitebooksmanager.CloudFlare.CloudStorageService;
+import com.booksmanager.websitebooksmanager.CloudFlare.CloudflareR2Client;
+import com.booksmanager.websitebooksmanager.Layout.ProgressBarLabel;
+import com.booksmanager.websitebooksmanager.utilities.Utility;
+import com.vaadin.flow.component.UI;
+import com.vaadin.flow.server.streams.UploadMetadata;
+import org.springframework.context.annotation.Bean;
 import org.springframework.stereotype.Service;
 
 import java.io.File;
@@ -7,19 +14,23 @@ import java.io.FileInputStream;
 import java.io.FileOutputStream;
 import java.io.IOException;
 import java.nio.file.Files;
+import java.nio.file.Path;
 import java.util.zip.ZipEntry;
 import java.util.zip.ZipInputStream;
 
 @Service
 public class UnZipEpub {
 
-    public UnZipEpub() {
 
+    private static CloudflareR2Client cloudflareR2Client;
+
+    public UnZipEpub( CloudflareR2Client cloudflareR2Client) {
+        UnZipEpub.cloudflareR2Client = cloudflareR2Client;
     }
 
-    public static void UnzipFile(File file) throws IOException {
-        File destDir = Files.createTempDirectory("tmpDirPrefix").toFile();
-        System.out.println(destDir.toPath());
+    public static void unzip(ProgressBarLabel pb, UploadMetadata metadata, File file, UI ui) throws IOException {
+        File destDir = Files.createTempDirectory(metadata.fileName()).toFile();
+        System.out.println("Creating temporary directory: " + destDir.getAbsolutePath());
 
         byte[] buffer = new byte[1024];
 
@@ -53,8 +64,52 @@ public class UnZipEpub {
                 zipEntry = zis.getNextEntry();
             }
             zis.closeEntry();
+        } catch (Exception e) {
+            throw new RuntimeException(e);
         }
+        Files.walk(destDir.toPath()).filter(Files::isRegularFile).parallel().forEach(files -> {
+            try {
+                upload(files,destDir,metadata);
+            } catch (IOException e) {
+                throw new RuntimeException(e);
+            }
+        });
+
+
     }
+
+    private static void upload(Path path, File destDir, UploadMetadata metadata) throws IOException {
+
+        Path relativePath = destDir.toPath().relativize(path);
+
+        String baseName = metadata.fileName();
+        int dot = baseName.lastIndexOf('.');
+        if (dot != -1) {
+            baseName = baseName.substring(0, dot);
+        }
+
+        String r2Key = baseName + "/" +
+                relativePath.toString().replace('\\', '/');
+
+        String contentType = Files.probeContentType(path);
+
+        if (contentType == null) {
+            contentType = "application/octet-stream";
+        }
+
+
+        cloudflareR2Client.putObject(
+                "bookmanager",
+                "epubs/" + r2Key,
+                path.toFile(),
+                contentType
+        );
+
+
+
+    }
+
+
 
     /**
      * Guard against Zip Slip attacks by verifying the destination file

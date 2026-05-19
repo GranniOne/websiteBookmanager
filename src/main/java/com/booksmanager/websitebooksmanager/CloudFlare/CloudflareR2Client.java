@@ -18,8 +18,10 @@ import software.amazon.awssdk.services.s3.presigner.model.PresignedPutObjectRequ
 import software.amazon.awssdk.services.s3.presigner.model.PutObjectPresignRequest;
 
 import java.io.File;
+import java.io.IOException;
 import java.io.InputStream;
 import java.net.URI;
+import java.nio.file.Files;
 import java.nio.file.Path;
 import java.time.Duration;
 import java.util.List;
@@ -231,6 +233,21 @@ public class CloudflareR2Client {
                     .bucket(bucketName)
                     .key(key)
                     .contentType("application/pdf")
+                    .build();
+
+            s3Client.putObject(request, file.toPath());
+            // Note: The SDK can take a Path directly and handle the streaming for you!
+        } catch (S3Exception e) {
+            throw new RuntimeException("Failed to upload PDF: " + e.getMessage(), e);
+        }
+    }
+    public void putObject(String bucketName, String key, File file, String contentType) {
+
+        try {
+            PutObjectRequest request = PutObjectRequest.builder()
+                    .bucket(bucketName)
+                    .key(key)
+                    .contentType(contentType)
                     .build();
 
             s3Client.putObject(request, file.toPath());
