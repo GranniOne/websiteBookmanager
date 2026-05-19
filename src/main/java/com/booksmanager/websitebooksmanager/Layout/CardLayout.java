@@ -7,11 +7,12 @@ import com.vaadin.flow.component.html.Div;
 import com.vaadin.flow.component.html.Image;
 import com.vaadin.flow.component.html.Paragraph;
 import com.vaadin.flow.component.html.Span;
+import jakarta.annotation.security.PermitAll;
 import software.amazon.awssdk.core.ResponseInputStream;
 
 import java.io.IOException;
 
-
+@PermitAll
 public class CardLayout extends Composite<Div> {
 
 

@@ -46,6 +46,7 @@ public class SelectedBookView extends Div implements BeforeEnterObserver {
         // We encode the parts so spaces ("%20") don't break the URL
 
         String src = "/api/pdf/" + directory + "/" + book;
+        System.out.println(src );
         add(new EmbedPdfViewer(src));
 
 

@@ -1,6 +1,7 @@
 package com.booksmanager.websitebooksmanager.controllers;
 
 import com.booksmanager.websitebooksmanager.CloudFlare.CloudflareR2Client;
+import jakarta.annotation.security.PermitAll;
 import jakarta.servlet.http.HttpServletResponse;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PathVariable;
@@ -9,7 +10,7 @@ import org.springframework.web.bind.annotation.RestController;
 
 import java.io.IOException;
 import java.io.InputStream;
-
+@PermitAll
 @RestController
 public class BookStreamController {
 
@@ -21,6 +22,7 @@ public class BookStreamController {
 
     @GetMapping("/api/books/cover")
     public void getCover(@RequestParam String key, HttpServletResponse response) throws IOException {
+        System.out.println(key);
         response.setContentType("image/jpeg");
         // Browsers will cache this locally, making the second visit "instant"
         response.setHeader("Cache-Control", "public, max-age=86400");
