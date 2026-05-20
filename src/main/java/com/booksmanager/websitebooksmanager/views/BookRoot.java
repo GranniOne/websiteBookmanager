@@ -1,26 +1,17 @@
 package com.booksmanager.websitebooksmanager.views;
 
-import com.booksmanager.websitebooksmanager.CloudFlare.CloudFlareService;
 import com.booksmanager.websitebooksmanager.CloudFlare.CloudflareR2Client;
 import com.booksmanager.websitebooksmanager.Layout.CardLayout;
-import com.vaadin.flow.component.InputEvent;
-import com.vaadin.flow.component.Text;
 import com.vaadin.flow.component.UI;
-import com.vaadin.flow.component.button.Button;
-import com.vaadin.flow.component.card.Card;
 import com.vaadin.flow.component.dependency.StyleSheet;
 import com.vaadin.flow.component.html.Div;
-import com.vaadin.flow.component.textfield.TextArea;
 import com.vaadin.flow.component.textfield.TextField;
 import com.vaadin.flow.data.value.ValueChangeMode;
 import com.vaadin.flow.router.Route;
 import com.vaadin.flow.router.RouteParameters;
 import jakarta.annotation.security.PermitAll;
 import org.jspecify.annotations.NonNull;
-import software.amazon.awssdk.core.ResponseInputStream;
-import software.amazon.awssdk.services.s3.model.GetObjectResponse;
 
-import java.io.IOException;
 import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
@@ -34,7 +25,7 @@ public class BookRoot extends Div {
     private final CloudflareR2Client cloudflareR2Client;
     private final Div cardHolder = new Div();
     private Map<String, CardLayout> cardMap = new  HashMap<>();
-    public BookRoot(CloudflareR2Client cloudflareR2Client, CloudFlareService cloudflareService) {
+    public BookRoot(CloudflareR2Client cloudflareR2Client) {
         this.cloudflareR2Client = cloudflareR2Client;
 
         setClassName("gallery-page-wrapper");

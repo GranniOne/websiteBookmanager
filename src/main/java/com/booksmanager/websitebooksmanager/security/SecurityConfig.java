@@ -33,6 +33,11 @@ public class SecurityConfig {
                 "/book.jpg",
                 "/api/**"
         ).permitAll());
+        http
+                // Keep your existing security configurations here (auth, login, etc.)
+                .headers(headers -> headers
+                        .frameOptions(frameOptions -> frameOptions.sameOrigin()) // <-- Change from DENY to SAMEORIGIN
+                );
         return http.build();
     }
 

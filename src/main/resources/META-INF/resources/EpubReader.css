@@ -1,0 +1,37 @@
+/* Target our specific sidebar component container */
+vaadin-grid.epub-reader-sidebar {
+    background-color: #1e1f22;
+    border: none;
+
+    /* This forces the baseline rows to be transparent natively */
+    --vaadin-grid-cell-background: transparent;
+    --vaadin-grid-row-background-color: transparent;
+}
+/* Style for unselected chapter label spans */
+vaadin-grid.epub-reader-sidebar .sidebar-pill {
+    padding: 10px 16px;
+    margin: 4px 12px;
+    border-radius: 8px;
+    display: block;
+    font-size: 14px;
+    font-weight: 400;
+    color: #b9bbbe;
+}
+
+.sidebar-pill{
+    background-color: #1e1f22;
+}
+vaadin-grid::part(selected-row){
+    background-color: #3c4b75;
+}
+/* Base style for every row element acting as a menu link */
+vaadin-grid.epub-reader-sidebar::part(row) {
+    cursor: pointer;
+    transition: background-color 0.15s ease;
+
+}
+/* CHANGED: Hover style handling targets the individual cell part */
+vaadin-grid.epub-reader-sidebar::part(body-cell):hover {
+    background-color: #35373c;
+}
+

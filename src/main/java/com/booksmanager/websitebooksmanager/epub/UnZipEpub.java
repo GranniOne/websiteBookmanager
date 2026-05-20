@@ -82,7 +82,7 @@ public class UnZipEpub {
 
         Path relativePath = destDir.toPath().relativize(path);
 
-        String baseName = metadata.fileName();
+        String baseName = metadata.fileName().replace(" ","-");
         int dot = baseName.lastIndexOf('.');
         if (dot != -1) {
             baseName = baseName.substring(0, dot);

@@ -1,11 +1,9 @@
 package com.booksmanager.websitebooksmanager.views;
 
-import com.booksmanager.websitebooksmanager.CloudFlare.CloudFlareService;
 import com.booksmanager.websitebooksmanager.CloudFlare.CloudStorageService;
 import com.booksmanager.websitebooksmanager.CloudFlare.CloudflareR2Client;
 import com.booksmanager.websitebooksmanager.Layout.ProgressBarLabel;
 import com.booksmanager.websitebooksmanager.epub.UnZipEpub;
-import com.booksmanager.websitebooksmanager.utilities.Utility;
 import com.vaadin.flow.component.Text;
 import com.vaadin.flow.component.UI;
 import com.vaadin.flow.component.button.Button;
@@ -36,12 +34,11 @@ import java.util.concurrent.CompletableFuture;
 @StyleSheet("styles.css")
 @Route("")
 public class HomeView extends Div {
-    final CloudFlareService  cloudFlareService;
+
     final CloudStorageService cloudStorageService;
     final CloudflareR2Client  cloudflareR2Client;
 
-    public HomeView(CloudFlareService  cloudFlareService, CloudStorageService  cloudStorageService, CloudflareR2Client  cloudflareR2Client) {
-        this.cloudFlareService = cloudFlareService;
+    public HomeView(CloudStorageService  cloudStorageService, CloudflareR2Client  cloudflareR2Client) {
         this.cloudStorageService = cloudStorageService;
         this.cloudflareR2Client = cloudflareR2Client;
 

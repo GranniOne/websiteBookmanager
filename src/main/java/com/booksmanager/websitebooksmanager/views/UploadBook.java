@@ -1,216 +1,179 @@
 package com.booksmanager.websitebooksmanager.views;
 
-
-import com.booksmanager.websitebooksmanager.CloudFlare.CloudStorageService;
 import com.booksmanager.websitebooksmanager.CloudFlare.CloudflareR2Client;
-import com.vaadin.flow.component.Component;
-import com.vaadin.flow.component.HasValue;
-import com.vaadin.flow.component.Text;
-import com.vaadin.flow.component.datepicker.DatePicker;
-import com.vaadin.flow.component.html.Div;
-import com.vaadin.flow.component.html.Image;
+import com.booksmanager.websitebooksmanager.epub.EpubMetadataService;
+import com.booksmanager.websitebooksmanager.epub.EpubMetadataService.EpubPageEntry;
+import com.vaadin.flow.component.dependency.StyleSheet;
+import com.vaadin.flow.component.grid.Grid;
+import com.vaadin.flow.component.grid.GridVariant;
+import com.vaadin.flow.component.html.IFrame;
 import com.vaadin.flow.component.html.Span;
-import com.vaadin.flow.component.notification.Notification;
-import com.vaadin.flow.component.orderedlayout.FlexComponent;
 import com.vaadin.flow.component.orderedlayout.HorizontalLayout;
-import com.vaadin.flow.component.textfield.NumberField;
-import com.vaadin.flow.component.textfield.TextField;
-import com.vaadin.flow.dom.Style;
-import com.vaadin.flow.router.*;
-import com.vaadin.flow.server.VaadinSession;
+import com.vaadin.flow.component.orderedlayout.VerticalLayout;
+import com.vaadin.flow.router.BeforeEvent;
+import com.vaadin.flow.router.HasUrlParameter;
+import com.vaadin.flow.router.OptionalParameter;
+import com.vaadin.flow.router.Route;
 import jakarta.annotation.security.PermitAll;
-import org.springframework.beans.factory.annotation.Value;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
+import java.util.List;
+import java.util.Optional;
 
-import java.io.FileInputStream;
-import java.io.IOException;
-import java.nio.file.Files;
-import java.nio.file.Path;
-import java.nio.file.Paths;
-import java.text.DateFormat;
-import java.time.ZoneId;
-import java.util.*;
-
+@StyleSheet("EpubReader.css")
 @PermitAll
-@Route("upload")
-public class UploadBook extends Div implements HasUrlParameter<String> {
-    final CloudStorageService cloudStorageService;
-    final CloudflareR2Client cloudflareR2Client;
-    final String uploadDir;
+@Route("read-book/:BookId")
+public class UploadBook extends VerticalLayout implements HasUrlParameter<String> {
 
-    UploadBook(CloudStorageService cloudStorageService, CloudflareR2Client cloudflareR2Client, @Value("${app.upload.dir}") String uploadDir) {
-        this.cloudStorageService = cloudStorageService;
+    private static final Logger log = LoggerFactory.getLogger(UploadBook.class);
+
+    private final CloudflareR2Client cloudflareR2Client;
+    private final EpubMetadataService epubMetadataService;
+
+    private String currentActiveFullPath = "";
+    private List<EpubPageEntry> cachedSpinePages;
+
+    public UploadBook(CloudflareR2Client cloudflareR2Client, EpubMetadataService epubMetadataService) {
+        this.epubMetadataService = epubMetadataService;
         this.cloudflareR2Client = cloudflareR2Client;
-        this.uploadDir = uploadDir;
-
     }
 
     @Override
     public void setParameter(BeforeEvent event, @OptionalParameter String parameter) {
-        this.removeAll();
+        System.out.println(event.getRouteParameters().get("BookId").orElse(null));
+        removeAll();
 
-        // Unpacking the suitcase
-        Map<String, Object> map = (Map<String, Object>)
-                VaadinSession.getCurrent().getAttribute("pendingMetadata");
+        setSizeFull();
+        setPadding(true);
+        setSpacing(true);
 
+        //String bookKey = "book-of-vaadin-vaadin7";
+        String bookKey = event.getRouteParameters().get("BookId").orElse(null);
+        String expectedPrefix = "epubs/" + bookKey + "/";
 
+        // 1. Setup UI Elements
+        IFrame iframe = new IFrame();
+        iframe.setSizeFull();
+        iframe.getElement().setAttribute("frameborder", "0");
 
+        // 1b. Setup a Clean Navigation Style Grid
+        Grid<EpubPageEntry> grid = new Grid<>();
+        grid.setHeightFull();
+        grid.setWidth("280px");
 
+        // Add our custom class name matching our CSS stylesheet rules
+        grid.addClassName("epub-reader-sidebar");
 
+        // Strip the standard borders and row dividers via built-in theme variants
+        grid.addThemeVariants(
+                GridVariant.LUMO_NO_BORDER,
+                GridVariant.LUMO_NO_ROW_BORDERS
+        );
 
+        // Completely removes the header container row structure
+        grid.getElement().setAttribute("theme", "no-header");
 
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-        /*
-        setClassName("metadata-box");
-
-        List<String> pathList = event.getLocation()
-                .getQueryParameters()
-                .getParameters()
-                .get("file");
-
-        Path pathFromUrl = Paths.get(pathList.getFirst()).normalize();
-        Path baseDirectory = Paths.get(uploadDir);
-        Path securePath = baseDirectory.resolve(pathFromUrl).normalize();
-
-        if (!securePath.startsWith(baseDirectory)) {
-            throw new SecurityException("Invalid file path detected!");
-        }
-
-        Map<String, Object> metadataMap = cloudStorageService.createMetaDataMap(securePath,"programming","intermediate");
-
-        Div div = new Div();
-        div.getStyle().setFlexDirection(Style.FlexDirection.COLUMN).setDisplay(Style.Display.FLEX).setBackground("#ffeaea");
-
-        // Container for our inputs so we can access them later
-        Map<String, HasValue<?, ?>> fieldRegistry = new HashMap<>();
-
-        metadataMap.forEach((key, value) -> {
-            if (key.equals("outline")) return; // Don't make the TOC editable in a text field
-
-            HorizontalLayout row = new HorizontalLayout();
-
-            Component inputField;
-
-            // Determine the type of input based on the key or value type
-            if (value instanceof Calendar || key.contains("Date")) {
-                DatePicker datePicker = new DatePicker(key);
-                if (value instanceof Calendar) {
-                    // Convert Calendar to LocalDate for the DatePicker
-                    datePicker.setValue(((Calendar) value).toInstant()
-                            .atZone(ZoneId.systemDefault()).toLocalDate());
-                }
-                inputField = datePicker;
-            } else if (value instanceof Integer || key.equals("pages")) {
-                NumberField numberField = new NumberField(key);
-                numberField.setValue(value != null ? ((Integer) value).doubleValue() : 0.0);
-                inputField = numberField;
-            } else if (value instanceof String[]) {
-                TextField textField = new TextField(key);
-                String joined = String.join(", ", (String[]) value);
-                textField.setValue(joined);
-                textField.setPlaceholder("Separate with commas...");
-                inputField = textField;
-
-
-            } else {
-                TextField textField = new TextField(key);
-                textField.setValue(value != null ? value.toString() : "");
-                textField.setWidthFull();
-                inputField = textField;
+        // 2. Single Component Column acting as a Sidebar Item
+        grid.addComponentColumn(page -> {
+            String visibleTitle = page.getId();
+            if (visibleTitle.startsWith("idp") || visibleTitle.equals("htmltoc")) {
+                visibleTitle = "Chapter " + (cachedSpinePages.indexOf(page) + 1);
             }
 
-            fieldRegistry.put(key, (HasValue<?, ?>) inputField);
-            div.add(inputField);
+            Span itemLabel = new Span(visibleTitle);
+            itemLabel.addClassName("sidebar-pill"); // Binds directly to our rounded CSS rules
+
+            return itemLabel;
+        }).setFlexGrow(1);
+
+        // 2. DIRECTION 1: Grid Click -> Updates IFrame
+        grid.addSelectionListener(selectionEvent -> {
+            selectionEvent.getFirstSelectedItem().ifPresent(selectedPage -> {
+                if (selectedPage.getFullPath().equals(currentActiveFullPath)) {
+                    return;
+                }
+
+                currentActiveFullPath = selectedPage.getFullPath();
+                String relativePathInsideBook = currentActiveFullPath.substring(expectedPrefix.length());
+                String apiRoute = "/api/epub/" + bookKey + "/" + relativePathInsideBook;
+
+                log.info("Grid selection changed -> Navigating iframe to: {}", apiRoute);
+                iframe.setSrc(apiRoute);
+            });
         });
 
-        add(div);
+        // 3. DIRECTION 2: Safe Attach-Guarded Listener Execution
+        iframe.addAttachListener(attachEvent -> {
+            iframe.getElement().executeJs(
+                    "const iframe = this; " +
+                            "iframe.addEventListener('load', function() { " +
+                            "    try { " +
+                            "        const currentPath = iframe.contentWindow.location.pathname; " +
+                            "        if (currentPath && currentPath.startsWith('/api/epub/')) { " +
+                            "            iframe.dispatchEvent(new CustomEvent('internal-nav', { " +
+                            "                detail: { path: currentPath } " +
+                            "            })); " +
+                            "        } " +
+                            "    } catch(e) { " +
+                            "        console.warn('Iframe tracking restricted:', e); " +
+                            "    } " +
+                            "});"
+            );
+        });
 
+        // Register the DOM communication back-channel
+        iframe.getElement().addEventListener("internal-nav", domEvent -> {
+            String rawApiPath = domEvent.getEventData().get("event.detail.path").asString();
+            String targetLookupPrefix = "/api/epub/" + bookKey + "/";
 
-        // 3. PATHING: Define the cloud folder based on discovery
-        String folderKey = "books/" + (String) metadataMap.get("folderName") + "/";
-        String bucket = "bookmanager";
+            if (rawApiPath.startsWith(targetLookupPrefix)) {
+                String foundFullPath = expectedPrefix + rawApiPath.substring(targetLookupPrefix.length());
 
+                if (!foundFullPath.equals(currentActiveFullPath)) {
+                    this.currentActiveFullPath = foundFullPath;
+                    log.info("Internal iframe navigation detected! Syncing grid layout to: {}", foundFullPath);
 
-        // 4. GENERATION
-        String jsonMetadata = cloudStorageService.convertMapToJson(metadataMap);
-        byte[] thumbnail = cloudStorageService.generateThumbnailFromPath(securePath);
+                    syncGridSelectionToPath(foundFullPath, grid);
+                }
+            }
+        }).addEventData("event.detail.path");
 
-        Image image  = new Image(thumbnail,"cover image");
-        add(image);
+        // 4. Assemble Layout
+        HorizontalLayout workspace = new HorizontalLayout(grid, iframe);
+        workspace.setSizeFull();
+        workspace.setFlexGrow(1, iframe);
+        add(workspace);
 
+        // 5. Initial Data Binding
+        try {
+            cachedSpinePages = epubMetadataService.findTableOfContentsPath(bookKey);
+            grid.setItems(cachedSpinePages);
 
-        System.out.println(metadataMap.get("filename"));
-        System.out.println(folderKey);
+            if (!cachedSpinePages.isEmpty()) {
+                EpubPageEntry initialPage = cachedSpinePages.get(0);
 
-        /*
-        // 5.UPLOADS
-        //PDF: Key uses the discovered identity
-        this.cloudflareR2Client.putObject(bucket, folderKey + metadataMap.get("filename"), securePath);
+                this.currentActiveFullPath = initialPage.getFullPath();
+                grid.select(initialPage);
 
-        //JSON: metadata.json
-        this.cloudflareR2Client.putObject(bucket, folderKey + "meta.json", jsonMetadata);
-
-        //Image: thumb.jpg
-        if (thumbnail != null) {
-            this.cloudflareR2Client.putObject(bucket, folderKey + "cover.jpg", thumbnail);
+                String relativePathInsideBook = currentActiveFullPath.substring(expectedPrefix.length());
+                iframe.setSrc("/api/epub/" + bookKey + "/" + relativePathInsideBook);
+            }
+        } catch (Exception e) {
+            log.error("Failed to compile layout sync mapping tracking engines", e);
         }
+    }
 
-        // 6. CLEANUP
-        try { Files.deleteIfExists(securePath); } catch (IOException ignored) {}
+    private void syncGridSelectionToPath(String path, Grid<EpubPageEntry> grid) {
+        if (cachedSpinePages == null) return;
 
+        Optional<EpubPageEntry> match = cachedSpinePages.stream()
+                .filter(page -> page.getFullPath().equals(path))
+                .findFirst();
 
-
-
-
-
-
-        // Now the UI knows!
-        Notification.show("Archived: " + metadataMap.get("title"));
-
-         */
-
-
+        match.ifPresent(page -> {
+            grid.select(page);
+            grid.scrollToIndex(cachedSpinePages.indexOf(page));
+        });
     }
 }
