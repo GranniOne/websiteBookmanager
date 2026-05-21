@@ -10,6 +10,7 @@ import software.amazon.awssdk.core.ResponseInputStream;
 import software.amazon.awssdk.services.s3.model.GetObjectResponse;
 import software.amazon.awssdk.services.s3.model.NoSuchKeyException;
 
+import java.io.File;
 import java.io.IOException;
 
 @RestController
@@ -45,7 +46,7 @@ public class EpubUploadController {
             try (ResponseInputStream<GetObjectResponse> s3Stream = cloudflareR2Client.getObjectFromR2(r2ObjectKey)) {
 
                 // 5. Send the correct browser context headers
-                response.setContentType(determineMimeType(relativeFilePath));
+                response.setContentType(s3Stream.response().contentType());
                 response.setContentLengthLong(s3Stream.response().contentLength());
 
                 // 6. Direct memory pipe stream transfer out to the client
@@ -54,33 +55,5 @@ public class EpubUploadController {
         } catch (NoSuchKeyException e) {
             response.sendError(HttpServletResponse.SC_NOT_FOUND, "The requested book file does not exist.");
         }
-    }
-
-    private String determineMimeType(String path) {
-        String lowerPath = path.toLowerCase();
-
-        // EPUB text content can use either extension depending on how it was packaged
-        if (lowerPath.endsWith(".html") || lowerPath.endsWith(".xhtml")) return "application/xhtml+xml";
-
-        if (lowerPath.endsWith(".css")) return "text/css";
-        if (lowerPath.endsWith(".js")) return "application/javascript";
-
-        // Handles your .png image pathing seamlessly
-        if (lowerPath.endsWith(".png")) return "image/png";
-        if (lowerPath.endsWith(".jpg") || lowerPath.endsWith(".jpeg")) return "image/jpeg";
-        if (lowerPath.endsWith(".gif")) return "image/gif";
-        if (lowerPath.endsWith(".svg")) return "image/svg+xml";
-
-        // Embedded asset typography files
-        if (lowerPath.endsWith(".woff")) return "font/woff";
-        if (lowerPath.endsWith(".woff2")) return "font/woff2";
-        if (lowerPath.endsWith(".otf")) return "font/otf";
-        if (lowerPath.endsWith(".ttf")) return "font/ttf";
-
-        // Structural book package indexing files
-        if (lowerPath.endsWith(".opf")) return "application/oebps-package+xml";
-        if (lowerPath.endsWith(".ncx")) return "application/x-dtbncx+xml";
-
-        return "application/octet-stream";
     }
 }

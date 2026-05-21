@@ -69,6 +69,7 @@ public class UnZipEpub {
         }
         Files.walk(destDir.toPath()).filter(Files::isRegularFile).parallel().forEach(files -> {
             try {
+
                 upload(files,destDir,metadata);
             } catch (IOException e) {
                 throw new RuntimeException(e);
@@ -91,11 +92,8 @@ public class UnZipEpub {
         String r2Key = baseName + "/" +
                 relativePath.toString().replace('\\', '/');
 
-        String contentType = Files.probeContentType(path);
+        String contentType = Utility.determineMimeType(path.toString());
 
-        if (contentType == null) {
-            contentType = "application/octet-stream";
-        }
 
 
         cloudflareR2Client.putObject(

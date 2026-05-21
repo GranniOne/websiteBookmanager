@@ -14,7 +14,8 @@ import org.apache.pdfbox.rendering.PDFRenderer;
 import org.springframework.stereotype.Service;
 import software.amazon.awssdk.services.s3.endpoints.internal.Value;
 import tools.jackson.databind.ObjectMapper;
-
+import java.awt.Color;
+import java.awt.Graphics2D;
 import javax.imageio.ImageIO;
 import java.awt.image.BufferedImage;
 import java.io.ByteArrayOutputStream;
@@ -28,6 +29,7 @@ import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.function.Supplier;
+import java.util.logging.Logger;
 
 @Service
 public class CloudStorageService {
@@ -133,15 +135,26 @@ public class CloudStorageService {
         }
     }
 
-    // Your existing thumbnail logic works perfectly!
     public byte[] generateThumbnailFromPath(File file) {
         try (PDDocument document = Loader.loadPDF(file)) {
             PDFRenderer pdfRenderer = new PDFRenderer(document);
-            BufferedImage bim = pdfRenderer.renderImageWithDPI(0, 72);
+            // Render the image
+            BufferedImage bim = pdfRenderer.renderImageWithDPI(0, 200);
+
+            // Create a new RGB image (no transparency) with the same dimensions
+            BufferedImage rgbImage = new BufferedImage(bim.getWidth(), bim.getHeight(), BufferedImage.TYPE_INT_RGB);
+
+            // Draw the original image onto the white background
+            Graphics2D g = rgbImage.createGraphics();
+            g.drawImage(bim, 0, 0, Color.WHITE, null);
+            g.dispose();
+
             ByteArrayOutputStream baos = new ByteArrayOutputStream();
-            ImageIO.write(bim, "jpg", baos);
+            // Save the solid RGB image instead of the original
+            ImageIO.write(rgbImage, "jpg", baos);
             return baos.toByteArray();
         } catch (Exception e) {
+            e.printStackTrace(); // Log the error to see if it's a font or rendering issue
             return null;
         }
     }

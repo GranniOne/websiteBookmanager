@@ -2,13 +2,16 @@ package com.booksmanager.websitebooksmanager.epub;
 
 
 import com.booksmanager.websitebooksmanager.CloudFlare.CloudflareR2Client;
+import org.apache.commons.io.IOUtils;
 import org.w3c.dom.Document;
 import org.w3c.dom.Element;
 import org.w3c.dom.NodeList;
 
 import javax.xml.parsers.DocumentBuilder;
 import javax.xml.parsers.DocumentBuilderFactory;
+import java.io.ByteArrayInputStream;
 import java.io.InputStream;
+import java.nio.charset.StandardCharsets;
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.Comparator;
@@ -60,14 +63,26 @@ public class EpubHandler {
      * Built-in helper to safely parse XML streams while blocking XXE Injection Attacks
      */
     private Document parseXmlSecurely(InputStream inputStream) throws Exception {
-        DocumentBuilderFactory factory = DocumentBuilderFactory.newInstance();
+        // 1. Read the input stream into a string
+        String xmlContent = IOUtils.toString(inputStream, StandardCharsets.UTF_8);
 
+        // 2. Sanitize: Remove the DOCTYPE declaration
+        String sanitizedXml = xmlContent.replaceAll("(?i)<!DOCTYPE[\\s\\S]*?>", "");
+
+        // 3. Convert back to an InputStream
+        InputStream sanitizedStream = new ByteArrayInputStream(sanitizedXml.getBytes(StandardCharsets.UTF_8));
+
+        // 4. Proceed with secure parsing
+        DocumentBuilderFactory factory = DocumentBuilderFactory.newInstance();
         factory.setFeature("http://apache.org/xml/features/disallow-doctype-decl", true);
         factory.setFeature("http://xml.org/sax/features/external-general-entities", false);
         factory.setFeature("http://xml.org/sax/features/external-parameter-entities", false);
 
+        // Crucial: ensure Namespace awareness is set if the XML uses them (like your NCX)
+        factory.setNamespaceAware(true);
+
         DocumentBuilder builder = factory.newDocumentBuilder();
-        Document doc = builder.parse(inputStream);
+        Document doc = builder.parse(sanitizedStream);
         doc.getDocumentElement().normalize();
         return doc;
     }
