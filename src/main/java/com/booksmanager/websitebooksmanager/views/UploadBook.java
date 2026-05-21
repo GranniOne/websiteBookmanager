@@ -3,6 +3,10 @@ package com.booksmanager.websitebooksmanager.views;
 import com.booksmanager.websitebooksmanager.CloudFlare.CloudflareR2Client;
 import com.booksmanager.websitebooksmanager.epub.EpubMetadataService;
 import com.booksmanager.websitebooksmanager.epub.EpubMetadataService.EpubPageEntry;
+import com.booksmanager.websitebooksmanager.epub.EpubMetadataService.EpubPageOrder;
+import com.vaadin.flow.component.ClientCallable;
+import com.vaadin.flow.component.HtmlComponent;
+import com.vaadin.flow.component.button.Button;
 import com.vaadin.flow.component.dependency.StyleSheet;
 import com.vaadin.flow.component.grid.Grid;
 import com.vaadin.flow.component.grid.GridVariant;
@@ -10,6 +14,8 @@ import com.vaadin.flow.component.html.IFrame;
 import com.vaadin.flow.component.html.Span;
 import com.vaadin.flow.component.orderedlayout.HorizontalLayout;
 import com.vaadin.flow.component.orderedlayout.VerticalLayout;
+import com.vaadin.flow.dom.Element;
+import com.vaadin.flow.dom.ElementFactory;
 import com.vaadin.flow.router.BeforeEvent;
 import com.vaadin.flow.router.HasUrlParameter;
 import com.vaadin.flow.router.OptionalParameter;
@@ -25,14 +31,16 @@ import java.util.Optional;
 @PermitAll
 @Route("read-book/:BookId")
 public class UploadBook extends VerticalLayout implements HasUrlParameter<String> {
-
+    private HorizontalLayout myButtonContainer = new HorizontalLayout(); // This is the container!
     private static final Logger log = LoggerFactory.getLogger(UploadBook.class);
 
     private final CloudflareR2Client cloudflareR2Client;
     private final EpubMetadataService epubMetadataService;
 
     private String currentActiveFullPath = "";
-    private List<EpubPageEntry> cachedSpinePages;
+    private List<EpubPageOrder> cachedSpinePages;
+
+    IFrame iframe = new IFrame();
 
     public UploadBook(CloudflareR2Client cloudflareR2Client, EpubMetadataService epubMetadataService) {
         this.epubMetadataService = epubMetadataService;
@@ -52,13 +60,21 @@ public class UploadBook extends VerticalLayout implements HasUrlParameter<String
         String bookKey = event.getRouteParameters().get("BookId").orElse(null);
         String expectedPrefix = "epubs/" + bookKey + "/";
 
-        // 1. Setup UI Elements
-        IFrame iframe = new IFrame();
-        iframe.setSizeFull();
-        iframe.getElement().setAttribute("frameborder", "0");
+        iframe.getElement().addEventListener("load", e -> {
+            // Instead of appending baseUrl, just provide the full path relative to the domain root
+            String jsPath = "/api/epub/" + bookKey + "/js/kobo.js";
+
+            String jsCode =
+                    "var s = document.createElement('script');" +
+                            "s.src = '" + jsPath + "';" + // Use absolute path starting with /
+                            "s.onload = function() { if(typeof paginate === 'function') paginate(); };" +
+                            "this.contentDocument.head.appendChild(s);";
+
+            iframe.getElement().executeJs(jsCode);
+        });
 
         // 1b. Setup a Clean Navigation Style Grid
-        Grid<EpubPageEntry> grid = new Grid<>();
+        Grid<EpubPageOrder> grid = new Grid<>();
         grid.setHeightFull();
         grid.setWidth("280px");
 
@@ -76,10 +92,10 @@ public class UploadBook extends VerticalLayout implements HasUrlParameter<String
 
         // 2. Single Component Column acting as a Sidebar Item
         grid.addComponentColumn(page -> {
-            String visibleTitle = page.getId();
-            if (visibleTitle.startsWith("idp") || visibleTitle.equals("htmltoc")) {
-                visibleTitle = "Chapter " + (cachedSpinePages.indexOf(page) + 1);
-            }
+            String visibleTitle = Integer.toString(page.getId());
+
+            //visibleTitle = "Chapter " + (cachedSpinePages.indexOf(page) + 1);
+
 
             Span itemLabel = new Span(visibleTitle);
             itemLabel.addClassName("sidebar-pill"); // Binds directly to our rounded CSS rules
@@ -90,11 +106,11 @@ public class UploadBook extends VerticalLayout implements HasUrlParameter<String
         // 2. DIRECTION 1: Grid Click -> Updates IFrame
         grid.addSelectionListener(selectionEvent -> {
             selectionEvent.getFirstSelectedItem().ifPresent(selectedPage -> {
-                if (selectedPage.getFullPath().equals(currentActiveFullPath)) {
+                if (selectedPage.getSrc().equals(currentActiveFullPath)) {
                     return;
                 }
 
-                currentActiveFullPath = selectedPage.getFullPath();
+                currentActiveFullPath = selectedPage.getSrc();
                 String relativePathInsideBook = currentActiveFullPath.substring(expectedPrefix.length());
                 String apiRoute = "/api/epub/" + bookKey + "/" + relativePathInsideBook;
 
@@ -147,28 +163,38 @@ public class UploadBook extends VerticalLayout implements HasUrlParameter<String
 
         // 5. Initial Data Binding
         try {
+
             cachedSpinePages = epubMetadataService.findTableOfContentsPath(bookKey);
+
             grid.setItems(cachedSpinePages);
 
             if (!cachedSpinePages.isEmpty()) {
-                EpubPageEntry initialPage = cachedSpinePages.get(0);
+                EpubPageOrder initialPage = cachedSpinePages.get(0);
 
-                this.currentActiveFullPath = initialPage.getFullPath();
+                this.currentActiveFullPath = initialPage.getSrc();
                 grid.select(initialPage);
 
                 String relativePathInsideBook = currentActiveFullPath.substring(expectedPrefix.length());
                 iframe.setSrc("/api/epub/" + bookKey + "/" + relativePathInsideBook);
             }
+
+
         } catch (Exception e) {
             log.error("Failed to compile layout sync mapping tracking engines", e);
         }
+
+
+
     }
 
-    private void syncGridSelectionToPath(String path, Grid<EpubPageEntry> grid) {
+
+
+
+    private void syncGridSelectionToPath(String path, Grid<EpubPageOrder> grid) {
         if (cachedSpinePages == null) return;
 
-        Optional<EpubPageEntry> match = cachedSpinePages.stream()
-                .filter(page -> page.getFullPath().equals(path))
+        Optional<EpubPageOrder> match = cachedSpinePages.stream()
+                .filter(page -> page.getSrc().equals(path))
                 .findFirst();
 
         match.ifPresent(page -> {

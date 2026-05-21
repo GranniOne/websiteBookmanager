@@ -45,12 +45,55 @@ public class EpubMetadataService {
         public String getMediaType() { return mediaType; }
     }
 
+
+    public static class EpubPageOrder {
+        private final int id;
+
+        public int getId() {
+            return id;
+        }
+
+        public int getPlayOrder() {
+            return playOrder;
+        }
+
+        public String getTitle() {
+            return title;
+        }
+
+        public String getSrc() {
+            return src;
+        }
+
+        private final int playOrder;
+        private final String title;
+
+        @Override
+        public String toString() {
+            return "EpubPageOrder{" +
+                    "id=" + id +
+                    ", playOrder=" + playOrder +
+                    ", title='" + title + '\'' +
+                    ", src='" + src + '\'' +
+                    '}';
+        }
+
+        private final String src;
+        public EpubPageOrder(int id, int playOrder, String title, String src) {
+            this.id = id;
+            this.playOrder = playOrder;
+            this.title = title;
+            this.src = src;
+
+        }
+    }
+
     /**
      * Finds the absolute bucket path of the Table of Contents file (NCX or HTML Nav)
      * @param bookKey The base folder name of the book (e.g., "book-of-vaadin-vaadin7")
      * @return The full R2 object key (e.g., "epubs/book-of-vaadin-vaadin7/OEBPS/toc.ncx")
      */
-    public List<EpubPageEntry> findTableOfContentsPath(String bookKey) throws Exception {
+    public List<EpubPageOrder> findTableOfContentsPath(String bookKey) throws Exception {
         String basePrefix = "epubs/" + bookKey + "/";
 
         // --------------------------------------------------------------------
@@ -81,13 +124,57 @@ public class EpubMetadataService {
         try (ResponseInputStream<GetObjectResponse> stream = cloudflareR2Client.getObjectFromR2(opfKey)) {
             Document doc = parseXmlSecurely(stream);
 
-            return extractSpineFromOpf(doc,basePrefix,opfParentFolder);
+            NodeList items = doc.getElementsByTagName("item");
+            String ncxRelativePath = "";
+            for (int i = 0; i < items.getLength(); i++) {
+                Element item = (Element) items.item(i);
+                if ("application/x-dtbncx+xml".equals(item.getAttribute("media-type"))) {
+                    ncxRelativePath = item.getAttribute("href");
+                    break;
+                }
+            }
+            // 2. Fetch and Parse the NCX file
+            List<EpubPageOrder> navList = new ArrayList<>();
+            if (!ncxRelativePath.isEmpty()) {
+                String ncxKey = basePrefix + opfParentFolder + ncxRelativePath;
+                try (ResponseInputStream<GetObjectResponse> ncxStream = cloudflareR2Client.getObjectFromR2(ncxKey)) {
+                    Document ncxDoc = parseXmlSecurely(ncxStream);
+                    navList = extractNavigationfromNcx(ncxDoc, basePrefix, opfParentFolder);
+                }
+            }
+
+            return navList;
+            //return extractSpineFromOpf(doc,basePrefix,opfParentFolder);
 
         } catch (Exception e) {
             throw new RuntimeException("Failed to process OPF data links from R2 storage", e);
         }
 
     }
+    private List<EpubPageOrder> extractNavigationfromNcx(Document ncxDoc, String basePrefix, String opfParentFolder) {
+        List<EpubPageOrder> navigation = new ArrayList<>();
+        String folderPath = opfParentFolder.endsWith("/") ? opfParentFolder : opfParentFolder + "/";
+
+        NodeList navPoints = ncxDoc.getElementsByTagName("navPoint");
+
+        for (int i = 0; i < navPoints.getLength(); i++) {
+            Element navPoint = (Element) navPoints.item(i);
+
+            int playOrder = Integer.parseInt(navPoint.getAttribute("playOrder"));
+            String title = navPoint.getElementsByTagName("text").item(0).getTextContent().trim();
+
+            // Note: You need the 'src' attribute, not textContent for the URL!
+            Element contentElement = (Element) navPoint.getElementsByTagName("content").item(0);
+            String relativeContent = contentElement.getAttribute("src");
+
+            String fullUrl = basePrefix + folderPath + relativeContent;
+
+            navigation.add(new EpubPageOrder(i, playOrder, title, fullUrl));
+        }
+        navigation.sort(Comparator.comparingInt(e -> e.playOrder));
+        return navigation;
+    }
+
 
     private List<EpubPageEntry> extractSpineFromOpf(Document doc, String basePrefix, String opfParentFolder) {
         List<EpubPageEntry> orderedSpineData = new ArrayList<>();
