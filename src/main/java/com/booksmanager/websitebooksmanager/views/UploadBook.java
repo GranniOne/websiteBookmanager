@@ -1,9 +1,9 @@
 package com.booksmanager.websitebooksmanager.views;
 
 import com.booksmanager.websitebooksmanager.CloudFlare.CloudflareR2Client;
-import com.booksmanager.websitebooksmanager.epub.EpubMetadataService;
-import com.booksmanager.websitebooksmanager.epub.EpubMetadataService.EpubPageEntry;
-import com.booksmanager.websitebooksmanager.epub.EpubMetadataService.EpubPageOrder;
+import com.booksmanager.websitebooksmanager.epub.EpubHandler;
+
+import com.booksmanager.websitebooksmanager.epub.EpubPage;
 import com.vaadin.flow.component.ClientCallable;
 import com.vaadin.flow.component.HtmlComponent;
 import com.vaadin.flow.component.button.Button;
@@ -37,29 +37,41 @@ public class UploadBook extends VerticalLayout implements HasUrlParameter<String
     private static final Logger log = LoggerFactory.getLogger(UploadBook.class);
 
     private final CloudflareR2Client cloudflareR2Client;
-    private final EpubMetadataService epubMetadataService;
+    private EpubHandler epubHandler;
 
     private String currentActiveFullPath = "";
-    private List<EpubPageOrder> cachedSpinePages;
+    private List<EpubPage> cachedSpinePages;
 
     IFrame iframe = new IFrame();
 
-    public UploadBook(CloudflareR2Client cloudflareR2Client, EpubMetadataService epubMetadataService) {
-        this.epubMetadataService = epubMetadataService;
+    public UploadBook(CloudflareR2Client cloudflareR2Client) {
         this.cloudflareR2Client = cloudflareR2Client;
     }
 
     @Override
     public void setParameter(BeforeEvent event, @OptionalParameter String parameter) {
-        System.out.println(event.getRouteParameters().get("BookId").orElse(null));
+        String bookKey = event.getRouteParameters().get("BookId").orElse(null);
+        this.epubHandler = new EpubHandler(cloudflareR2Client, bookKey);
+
+        try {
+            // Initialize the handler (parses Container and OPF)
+            epubHandler.initialize();
+
+            // Fetch the data using your new dedicated tools
+            cachedSpinePages = epubHandler.getTableOfContents();
+
+            // ... grid.setItems(cachedSpinePages) ...
+        } catch (Exception e) {
+            log.error("Failed to initialize book handler", e);
+        }
+
         removeAll();
 
         setSizeFull();
         setPadding(true);
         setSpacing(true);
 
-        //String bookKey = "book-of-vaadin-vaadin7";
-        String bookKey = event.getRouteParameters().get("BookId").orElse(null);
+
         String expectedPrefix = "epubs/" + bookKey + "/";
 
         iframe.getElement().addEventListener("load", e -> {
@@ -76,7 +88,7 @@ public class UploadBook extends VerticalLayout implements HasUrlParameter<String
         });
 
         // 1b. Setup a Clean Navigation Style Grid
-        Grid<EpubPageOrder> grid = new Grid<>();
+        Grid<EpubPage> grid = new Grid<>();
         grid.setHeightFull();
         grid.setWidth("280px");
 
@@ -94,7 +106,7 @@ public class UploadBook extends VerticalLayout implements HasUrlParameter<String
 
         // 2. Single Component Column acting as a Sidebar Item
         grid.addComponentColumn(page -> {
-            String visibleTitle = Integer.toString(page.getId());
+            String visibleTitle = page.getTitle();
 
             //visibleTitle = "Chapter " + (cachedSpinePages.indexOf(page) + 1);
 
@@ -166,12 +178,12 @@ public class UploadBook extends VerticalLayout implements HasUrlParameter<String
         // 5. Initial Data Binding
         try {
 
-            cachedSpinePages = epubMetadataService.findTableOfContentsPath(bookKey);
+            cachedSpinePages = epubHandler.getTableOfContents();
 
             grid.setItems(cachedSpinePages);
 
             if (!cachedSpinePages.isEmpty()) {
-                EpubPageOrder initialPage = cachedSpinePages.get(0);
+                EpubPage initialPage = cachedSpinePages.get(0);
 
                 this.currentActiveFullPath = initialPage.getSrc();
                 grid.select(initialPage);
@@ -192,10 +204,10 @@ public class UploadBook extends VerticalLayout implements HasUrlParameter<String
 
 
 
-    private void syncGridSelectionToPath(String path, Grid<EpubPageOrder> grid) {
+    private void syncGridSelectionToPath(String path, Grid<EpubPage> grid) {
         if (cachedSpinePages == null) return;
 
-        Optional<EpubPageOrder> match = cachedSpinePages.stream()
+        Optional<EpubPage> match = cachedSpinePages.stream()
                 .filter(page -> page.getSrc().equals(path))
                 .findFirst();
 
