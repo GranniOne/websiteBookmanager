@@ -7,15 +7,18 @@ import com.booksmanager.websitebooksmanager.epub.EpubMetadataService.EpubPageOrd
 import com.vaadin.flow.component.ClientCallable;
 import com.vaadin.flow.component.HtmlComponent;
 import com.vaadin.flow.component.button.Button;
+import com.vaadin.flow.component.button.ButtonVariant;
 import com.vaadin.flow.component.dependency.StyleSheet;
 import com.vaadin.flow.component.grid.Grid;
 import com.vaadin.flow.component.grid.GridVariant;
 import com.vaadin.flow.component.html.IFrame;
 import com.vaadin.flow.component.html.Span;
+import com.vaadin.flow.component.orderedlayout.FlexLayout;
 import com.vaadin.flow.component.orderedlayout.HorizontalLayout;
 import com.vaadin.flow.component.orderedlayout.VerticalLayout;
 import com.vaadin.flow.dom.Element;
 import com.vaadin.flow.dom.ElementFactory;
+import com.vaadin.flow.dom.Style;
 import com.vaadin.flow.router.BeforeEvent;
 import com.vaadin.flow.router.HasUrlParameter;
 import com.vaadin.flow.router.OptionalParameter;
@@ -31,7 +34,6 @@ import java.util.Optional;
 @PermitAll
 @Route("read-book/:BookId")
 public class UploadBook extends VerticalLayout implements HasUrlParameter<String> {
-    private HorizontalLayout myButtonContainer = new HorizontalLayout(); // This is the container!
     private static final Logger log = LoggerFactory.getLogger(UploadBook.class);
 
     private final CloudflareR2Client cloudflareR2Client;
