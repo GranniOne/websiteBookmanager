@@ -117,7 +117,7 @@ public class HomeView extends Div {
                 CompletableFuture.runAsync(() -> {
                     try {
                         UnZipEpub.unzip(pb, metadata, file, ui);
-                    } catch (IOException e) {
+                    } catch (Exception e) {
                         throw new RuntimeException(e);
                     }
                 });

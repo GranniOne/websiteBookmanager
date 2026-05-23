@@ -19,9 +19,9 @@ public class BookStreamController {
         this.cloudflareR2Client = cloudflareR2Client;
     }
 
-    @GetMapping("/api/books/{bookId}/cover")
-    public void getCover(@PathVariable String bookId, HttpServletResponse response) throws IOException {
-        String key = "books/" + bookId + "/cover.jpg";
+    @GetMapping("/api/{bookFormat}/{bookId}/cover")
+    public void getCover(@PathVariable String bookId,@PathVariable String bookFormat ,HttpServletResponse response) throws IOException {
+        String key = bookFormat + "/" + bookId + "/cover.jpg";
         System.out.println("key: " + key);
         response.setContentType("image/jpeg");
         // Browsers will cache this locally, making the second visit "instant"
@@ -33,6 +33,7 @@ public class BookStreamController {
             response.setStatus(HttpServletResponse.SC_NOT_FOUND);
         }
     }
+
 
     @GetMapping("/api/pdf/{directory}/{filename}")
     public void streamPdf(@PathVariable String directory,

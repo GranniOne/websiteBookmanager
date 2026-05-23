@@ -8,13 +8,22 @@ import com.vaadin.flow.component.UI;
 import com.vaadin.flow.server.streams.UploadMetadata;
 import org.springframework.context.annotation.Bean;
 import org.springframework.stereotype.Service;
+import org.w3c.dom.Document;
+import org.w3c.dom.Element;
+import org.w3c.dom.Node;
+import org.w3c.dom.NodeList;
 
+import javax.xml.parsers.DocumentBuilder;
+import javax.xml.parsers.DocumentBuilderFactory;
 import java.io.File;
 import java.io.FileInputStream;
 import java.io.FileOutputStream;
 import java.io.IOException;
 import java.nio.file.Files;
 import java.nio.file.Path;
+import java.nio.file.StandardCopyOption;
+import java.util.List;
+import java.util.stream.Stream;
 import java.util.zip.ZipEntry;
 import java.util.zip.ZipInputStream;
 
@@ -28,7 +37,7 @@ public class UnZipEpub {
         UnZipEpub.cloudflareR2Client = cloudflareR2Client;
     }
 
-    public static void unzip(ProgressBarLabel pb, UploadMetadata metadata, File file, UI ui) throws IOException {
+    public static void unzip(ProgressBarLabel pb, UploadMetadata metadata, File file, UI ui) throws IOException, Exception {
         File destDir = Files.createTempDirectory(metadata.fileName()).toFile();
         System.out.println("Creating temporary directory: " + destDir.getAbsolutePath());
 
@@ -67,6 +76,11 @@ public class UnZipEpub {
         } catch (Exception e) {
             throw new RuntimeException(e);
         }
+
+        extractCover(destDir.toPath());
+
+
+
         Files.walk(destDir.toPath()).filter(Files::isRegularFile).parallel().forEach(files -> {
             try {
 
@@ -77,7 +91,98 @@ public class UnZipEpub {
         });
 
 
+
+
+
+
     }
+
+
+
+
+    public static void extractCover(Path destDir) {
+        try {
+            DocumentBuilderFactory factory = DocumentBuilderFactory.newInstance();
+            DocumentBuilder builder = factory.newDocumentBuilder();
+
+            // 1. Find container.xml
+            Path containerPath = Files.walk(destDir)
+                    .filter(p -> p.getFileName().toString().equals("container.xml"))
+                    .findFirst()
+                    .orElseThrow();
+
+            Document containerDoc = builder.parse(containerPath.toFile());
+            containerDoc.getDocumentElement().normalize();
+
+            // 2. Get OPF path
+            Element rootfile = (Element) containerDoc
+                    .getElementsByTagName("rootfile")
+                    .item(0);
+
+            String opfRelativePath = rootfile.getAttribute("full-path");
+            Path opfPath = destDir.resolve(opfRelativePath);
+
+            // 3. Parse OPF
+            Document opfDoc = builder.parse(opfPath.toFile());
+            opfDoc.getDocumentElement().normalize();
+
+            // 4. Extract cover id (meta property="cover" or name="cover")
+            String coverId = null;
+
+            NodeList metaList = opfDoc.getElementsByTagName("meta");
+            for (int i = 0; i < metaList.getLength(); i++) {
+                Element meta = (Element) metaList.item(i);
+
+                // EPUB3 style: property="cover"
+                if ("cover".equals(meta.getAttribute("property"))) {
+                    coverId = meta.getAttribute("content");
+                    break;
+                }
+
+                // EPUB2 style: name="cover"
+                if ("cover".equals(meta.getAttribute("name"))) {
+                    coverId = meta.getAttribute("content");
+                    break;
+                }
+            }
+
+            if (coverId == null) {
+                System.out.println("No cover found in OPF");
+                return;
+            }
+
+            // 5. Build manifest map (id -> href)
+            NodeList itemList = opfDoc.getElementsByTagName("item");
+            String coverHref = null;
+
+            for (int i = 0; i < itemList.getLength(); i++) {
+                Element item = (Element) itemList.item(i);
+
+                if (coverId.equals(item.getAttribute("id"))) {
+                    coverHref = item.getAttribute("href");
+                    break;
+                }
+            }
+
+            if (coverHref == null) {
+                System.out.println("Cover href not found in manifest");
+                return;
+            }
+
+            // 6. Resolve actual file path
+            Path coverSource = opfPath.getParent().resolve(coverHref);
+            Path coverTarget = destDir.resolve("cover.jpg");
+
+            // 7. Copy cover into root
+            Files.copy(coverSource, coverTarget);
+
+            System.out.println("Cover extracted: " + coverTarget);
+
+        } catch (Exception e) {
+            e.printStackTrace();
+        }
+    }
+
 
     private static void upload(Path path, File destDir, UploadMetadata metadata) throws IOException {
 
