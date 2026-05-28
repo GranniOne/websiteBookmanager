@@ -185,6 +185,20 @@ public class HomeView extends Div {
 
 
         Upload upload = new Upload(temporaryFileHandler);
+        /*
+        upload.addAttachListener(event -> {
+            upload.getElement().executeJs("""
+        requestAnimationFrame(() => {
+            const input = this.shadowRoot.querySelector('input[type=file]');
+            if (input) {
+                input.setAttribute('webkitdirectory', '');
+                input.removeAttribute('multiple');
+            }
+        });
+    """);
+        });
+
+         */
         upload.setAcceptedFileTypes("application/pdf", ".pdf","application/epub+zip", ".epub");
         upload.setDropAllowed(false);
         upload.setUploadButton(uploadBtn);
@@ -221,6 +235,7 @@ public class HomeView extends Div {
         notification.add(layout);
 
         notification.setPosition(Notification.Position.TOP_CENTER);
+        notification.setDuration(5000);
 
         return notification;
     }
@@ -240,6 +255,8 @@ public class HomeView extends Div {
 
         notification.add(layout);
         notification.setPosition(Notification.Position.TOP_CENTER);
+        notification.setDuration(5000);
+
 
         return notification;
     }
