@@ -42,6 +42,15 @@ public class PdfBook implements BookInterface {
     }
 
     @Override
+    public BookType getBookType() {
+        return bookType;
+    }
+    @Override
+    public String StripFileName() {
+        return title.substring(0, title.lastIndexOf("."));
+    }
+
+    @Override
     public String toString() {
         return "PdfBook{" +
                 "id=" + id +

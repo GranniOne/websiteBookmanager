@@ -2,6 +2,7 @@ package com.booksmanager.websitebooksmanager.views;
 
 import com.booksmanager.websitebooksmanager.CloudFlare.CloudflareR2Client;
 import com.booksmanager.websitebooksmanager.Entities.BookInterface;
+import com.booksmanager.websitebooksmanager.Entities.BookType;
 import com.booksmanager.websitebooksmanager.Layout.CardLayout;
 import com.booksmanager.websitebooksmanager.Service.BookService;
 import com.vaadin.flow.component.UI;
@@ -50,8 +51,44 @@ public class BookRoot extends VerticalLayout {
 
         books.forEach(book -> {
 
+            String imageUrl = "";
+
+
+            if(book.getBookType().equals(BookType.EPUB)) {
+                imageUrl = "/api/epubs/" + book.StripFileName() + "/cover";
+            }else if(book.getBookType().equals(BookType.PDF)) {
+                imageUrl = "/api/books/" + book.StripFileName() + "/cover";
+            }
+
+
+            CardLayout card = new CardLayout(book.StripFileName(), imageUrl);
+
+
+            if(book.getBookType().equals(BookType.EPUB)) {
+                // navigation
+                card.getElement().addEventListener("click", event -> {
+                    UI.getCurrent().navigate(
+                            UploadBook.class,
+                            new RouteParameters("BookId", book.StripFileName())
+                    );
+                });
+            }
+            if(book.getBookType().equals(BookType.PDF)) {
+                // navigation
+                card.getElement().addEventListener("click", event -> {
+                    UI.getCurrent().navigate(
+                            BookDirectory.class,
+                            new RouteParameters("bookDirectory", book.StripFileName())
+                    );
+                });
+            }
+
+
+            cardHolder.add(card);
 
         });
+
+
         /*
         // 1. Load everything once
         List<S3Object> allObjects = cloudflareR2Client.listObjects("bookmanager");
@@ -82,8 +119,10 @@ public class BookRoot extends VerticalLayout {
             }
         }
 
-         */
-        /*
+
+        */
+         /*
+
 
         // 4. Build UI cards from book prefixes
         for (String bookPrefix : books) {
@@ -129,14 +168,16 @@ public class BookRoot extends VerticalLayout {
 
             cardHolder.add(card);
         }
-
+        */
         // 5. Optional UI elements
         TextField field = getTextField();
 
         add(field);
         add(cardHolder);
 
-         */
+
+
+
 
 
     }

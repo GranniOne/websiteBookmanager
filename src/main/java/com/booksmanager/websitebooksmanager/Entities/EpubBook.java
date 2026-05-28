@@ -28,6 +28,16 @@ public class EpubBook implements BookInterface{
     }
 
     @Override
+    public BookType getBookType() {
+        return null;
+    }
+
+    @Override
+    public String StripFileName() {
+        return "";
+    }
+
+    @Override
     public String toString() {
         return "EpubBook{" +
                 "id=" + id +
