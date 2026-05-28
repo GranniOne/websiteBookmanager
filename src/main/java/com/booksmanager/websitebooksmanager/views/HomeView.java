@@ -1,6 +1,8 @@
 package com.booksmanager.websitebooksmanager.views;
 
-import com.booksmanager.websitebooksmanager.CloudFlare.CloudStorageService;
+import com.booksmanager.websitebooksmanager.Entities.PdfBook;
+import com.booksmanager.websitebooksmanager.Service.PdfService;
+import com.booksmanager.websitebooksmanager.pdf.CloudStorageService;
 import com.booksmanager.websitebooksmanager.CloudFlare.CloudflareR2Client;
 import com.booksmanager.websitebooksmanager.Layout.ProgressBarLabel;
 import com.booksmanager.websitebooksmanager.epub.UnZipEpub;
@@ -26,7 +28,7 @@ import jakarta.annotation.security.PermitAll;
 import org.jspecify.annotations.NonNull;
 
 import java.io.File;
-import java.io.IOException;
+import java.util.List;
 import java.util.Map;
 import java.util.concurrent.CompletableFuture;
 
@@ -37,10 +39,12 @@ public class HomeView extends Div {
 
     final CloudStorageService cloudStorageService;
     final CloudflareR2Client  cloudflareR2Client;
+    final PdfService pdfService;
 
-    public HomeView(CloudStorageService  cloudStorageService, CloudflareR2Client  cloudflareR2Client) {
+    public HomeView(CloudStorageService  cloudStorageService, CloudflareR2Client  cloudflareR2Client, PdfService pdfService) {
         this.cloudStorageService = cloudStorageService;
         this.cloudflareR2Client = cloudflareR2Client;
+        this.pdfService = pdfService;
 
         // Force the view to fill the browser window
         setSizeFull();
@@ -254,6 +258,7 @@ public class HomeView extends Div {
             String jsonMetadata = cloudStorageService.convertMapToJson(metadataMap);
             String folderKey = "books/" + metadataMap.get("folderName") + "/";
 
+            pdfService.savePdf(new PdfBook((String) metadataMap.get("filename"),folderKey + metadataMap.get("filename")));
             // 3. UPLOAD: Send everything to Cloudflare R2
             cloudflareR2Client.putObject(bucket, folderKey + metadataMap.get("filename"), file);
             cloudflareR2Client.putObject(bucket, folderKey + "meta.json", jsonMetadata);

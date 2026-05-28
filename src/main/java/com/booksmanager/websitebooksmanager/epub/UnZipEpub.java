@@ -1,16 +1,13 @@
 package com.booksmanager.websitebooksmanager.epub;
 
-import com.booksmanager.websitebooksmanager.CloudFlare.CloudStorageService;
 import com.booksmanager.websitebooksmanager.CloudFlare.CloudflareR2Client;
 import com.booksmanager.websitebooksmanager.Layout.ProgressBarLabel;
 import com.booksmanager.websitebooksmanager.utilities.Utility;
 import com.vaadin.flow.component.UI;
 import com.vaadin.flow.server.streams.UploadMetadata;
-import org.springframework.context.annotation.Bean;
 import org.springframework.stereotype.Service;
 import org.w3c.dom.Document;
 import org.w3c.dom.Element;
-import org.w3c.dom.Node;
 import org.w3c.dom.NodeList;
 
 import javax.xml.parsers.DocumentBuilder;
@@ -21,9 +18,6 @@ import java.io.FileOutputStream;
 import java.io.IOException;
 import java.nio.file.Files;
 import java.nio.file.Path;
-import java.nio.file.StandardCopyOption;
-import java.util.List;
-import java.util.stream.Stream;
 import java.util.zip.ZipEntry;
 import java.util.zip.ZipInputStream;
 

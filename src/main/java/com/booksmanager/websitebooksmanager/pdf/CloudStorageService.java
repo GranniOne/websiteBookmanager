@@ -1,18 +1,16 @@
-package com.booksmanager.websitebooksmanager.CloudFlare;
+package com.booksmanager.websitebooksmanager.pdf;
 
-import com.vaadin.flow.component.html.Image;
+import com.booksmanager.websitebooksmanager.CloudFlare.CloudflareR2Client;
+import com.booksmanager.websitebooksmanager.Entities.PdfBook;
+import com.booksmanager.websitebooksmanager.Service.PdfService;
 import org.apache.pdfbox.Loader;
-import org.apache.pdfbox.cos.COSDictionary;
-import org.apache.pdfbox.cos.COSObject;
 import org.apache.pdfbox.pdmodel.PDDocument;
 import org.apache.pdfbox.pdmodel.PDDocumentInformation;
-import org.apache.pdfbox.pdmodel.PDPage;
 import org.apache.pdfbox.pdmodel.interactive.documentnavigation.outline.PDDocumentOutline;
 import org.apache.pdfbox.pdmodel.interactive.documentnavigation.outline.PDOutlineItem;
 import org.apache.pdfbox.pdmodel.interactive.documentnavigation.outline.PDOutlineNode;
 import org.apache.pdfbox.rendering.PDFRenderer;
 import org.springframework.stereotype.Service;
-import software.amazon.awssdk.services.s3.endpoints.internal.Value;
 import tools.jackson.databind.ObjectMapper;
 import java.awt.Color;
 import java.awt.Graphics2D;
@@ -21,28 +19,18 @@ import java.awt.image.BufferedImage;
 import java.io.ByteArrayOutputStream;
 import java.io.File;
 import java.io.IOException;
-import java.io.InputStream;
-import java.nio.file.Files;
-import java.nio.file.Path;
 import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
-import java.util.function.Supplier;
-import java.util.logging.Logger;
 
 @Service
 public class CloudStorageService {
-
-
-
-    private final CloudflareR2Client cloudflareR2Client;
     private final ObjectMapper mapper = new ObjectMapper();
-    private final String BUCKET_NAME = "bookmanager";
+
+    CloudStorageService() {
 
 
-    CloudStorageService(CloudflareR2Client cloudflareR2Client) {
-        this.cloudflareR2Client = cloudflareR2Client;
     }
 
 
@@ -120,6 +108,8 @@ public class CloudStorageService {
             document.getDocument().getXrefTable().forEach((key, value) -> System.out.println(key + ":    \n " + value));
 
             //printDeepMetadata(metadata);
+
+
 
             return metadata;
         } catch (Exception e) {

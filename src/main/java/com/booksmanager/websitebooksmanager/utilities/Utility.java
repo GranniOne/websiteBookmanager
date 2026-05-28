@@ -1,15 +1,9 @@
 package com.booksmanager.websitebooksmanager.utilities;
 
-import com.booksmanager.websitebooksmanager.CloudFlare.CloudStorageService;
+import com.booksmanager.websitebooksmanager.pdf.CloudStorageService;
 import com.booksmanager.websitebooksmanager.CloudFlare.CloudflareR2Client;
-import com.booksmanager.websitebooksmanager.Layout.ProgressBarLabel;
-import com.vaadin.flow.component.UI;
-import com.vaadin.flow.server.VaadinSession;
-import com.vaadin.flow.server.streams.UploadMetadata;
 import org.springframework.stereotype.Service;
 
-import java.io.File;
-import java.util.Map;
 @Service
 public class Utility {
 
