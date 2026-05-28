@@ -177,7 +177,7 @@ public class HomeView extends Div {
 
                 },bytesPerSecondLimit / 50)
                 .whenComplete((context,success) -> {
-                    Notification notification = success ? createSubmitSuccess() : createReportError("Failed to generate report!");
+                    Notification notification = success ? createSubmitSuccess(context.fileName()) : createReportError("Failed to generate report!");
                     notification.open();
 
 
@@ -190,7 +190,7 @@ public class HomeView extends Div {
         upload.setUploadButton(uploadBtn);
         upload.addFileRejectedListener(event -> {
 
-            Notification notification = createReportError(event.getFileName() + " " + event.getErrorMessage() + " must be of PDF type");
+            Notification notification = createReportError(event.getFileName() + " " + event.getErrorMessage() + " must be of PDF or EPUB type");
             notification.open();
         });
         return upload;
@@ -204,7 +204,7 @@ public class HomeView extends Div {
         btn.addClassName("btn-" + theme);
         return btn;
     }
-    public Notification createSubmitSuccess() {
+    public Notification createSubmitSuccess(String fileName) {
         Notification notification = new Notification();
         notification.addThemeVariants(NotificationVariant.SUCCESS);
 
@@ -213,7 +213,7 @@ public class HomeView extends Div {
         Button viewBtn = new Button("View");
         Button closeButton = new CloseButton();
         HorizontalLayout layout = new HorizontalLayout(icon,
-                new Text("Application submitted!"));
+                new Text(fileName + " submitted!"));
         layout.addToEnd(viewBtn, closeButton);
         layout.setAlignItems(FlexComponent.Alignment.CENTER);
         layout.setMinWidth("350px");
