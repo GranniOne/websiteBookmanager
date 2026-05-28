@@ -1,7 +1,9 @@
 package com.booksmanager.websitebooksmanager.views;
 
 import com.booksmanager.websitebooksmanager.CloudFlare.CloudflareR2Client;
+import com.booksmanager.websitebooksmanager.Entities.BookInterface;
 import com.booksmanager.websitebooksmanager.Layout.CardLayout;
+import com.booksmanager.websitebooksmanager.Service.BookService;
 import com.vaadin.flow.component.UI;
 import com.vaadin.flow.component.dependency.StyleSheet;
 import com.vaadin.flow.component.html.Div;
@@ -30,18 +32,27 @@ public class BookRoot extends VerticalLayout {
 
     private final HorizontalLayout cardHolder = new HorizontalLayout();
     private final Map<String, CardLayout> cardMap = new HashMap<>();
+    private final BookService bookService;
 
     private final Pattern BOOK_PATTERN =
             Pattern.compile("(epubs|books)/([^/]+)/");
 
     private final Map<String, String> coverMap = new HashMap<>();
 
-    public BookRoot(CloudflareR2Client cloudflareR2Client) {
+    public BookRoot(CloudflareR2Client cloudflareR2Client, BookService  bookService) {
         this.cloudflareR2Client = cloudflareR2Client;
+        this.bookService = bookService;
 
         setClassName("gallery-page-wrapper");
         cardHolder.setClassName("gallery-island");
 
+        List<BookInterface> books = bookService.getAllBooks();
+
+        books.forEach(book -> {
+
+
+        });
+        /*
         // 1. Load everything once
         List<S3Object> allObjects = cloudflareR2Client.listObjects("bookmanager");
 
@@ -70,6 +81,9 @@ public class BookRoot extends VerticalLayout {
                 }
             }
         }
+
+         */
+        /*
 
         // 4. Build UI cards from book prefixes
         for (String bookPrefix : books) {
@@ -121,6 +135,10 @@ public class BookRoot extends VerticalLayout {
 
         add(field);
         add(cardHolder);
+
+         */
+
+
     }
     private @NonNull TextField getTextField() {
         TextField field = new TextField();
@@ -135,6 +153,8 @@ public class BookRoot extends VerticalLayout {
         });
         return field;
     }
+
+
 }
 
 

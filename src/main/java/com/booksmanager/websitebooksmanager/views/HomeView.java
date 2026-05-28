@@ -1,5 +1,6 @@
 package com.booksmanager.websitebooksmanager.views;
 
+import com.booksmanager.websitebooksmanager.Entities.BookType;
 import com.booksmanager.websitebooksmanager.Entities.PdfBook;
 import com.booksmanager.websitebooksmanager.Service.PdfService;
 import com.booksmanager.websitebooksmanager.pdf.CloudStorageService;
@@ -185,7 +186,7 @@ public class HomeView extends Div {
 
 
         Upload upload = new Upload(temporaryFileHandler);
-        /*
+
         upload.addAttachListener(event -> {
             upload.getElement().executeJs("""
         requestAnimationFrame(() => {
@@ -198,7 +199,7 @@ public class HomeView extends Div {
     """);
         });
 
-         */
+
         upload.setAcceptedFileTypes("application/pdf", ".pdf","application/epub+zip", ".epub");
         upload.setDropAllowed(false);
         upload.setUploadButton(uploadBtn);
@@ -275,7 +276,7 @@ public class HomeView extends Div {
             String jsonMetadata = cloudStorageService.convertMapToJson(metadataMap);
             String folderKey = "books/" + metadataMap.get("folderName") + "/";
 
-            pdfService.savePdf(new PdfBook((String) metadataMap.get("filename"),folderKey + metadataMap.get("filename")));
+            pdfService.savePdf(new PdfBook((String) metadataMap.get("filename"),folderKey,"meta.json","cover.jpg",BookType.PDF));
             // 3. UPLOAD: Send everything to Cloudflare R2
             cloudflareR2Client.putObject(bucket, folderKey + metadataMap.get("filename"), file);
             cloudflareR2Client.putObject(bucket, folderKey + "meta.json", jsonMetadata);

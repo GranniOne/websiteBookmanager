@@ -11,13 +11,19 @@ public class PdfBook implements BookInterface {
 
     private String title;
     private String r2Key;
+    private String cover;
+    private String metadata;
+    private BookType bookType;
 
     private int pageCount;
     private boolean ocrEnabled;
 
-    public PdfBook(String title, String r2Key) {
+    public PdfBook(String title, String r2Key, String cover, String metadata, BookType bookType) {
         this.title = title;
         this.r2Key = r2Key;
+        this.cover = cover;
+        this.metadata = metadata;
+        this.bookType = bookType;
 
     }
 
