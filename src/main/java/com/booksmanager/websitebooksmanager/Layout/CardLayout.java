@@ -15,6 +15,8 @@ import java.io.IOException;
 @PermitAll
 public class CardLayout extends Composite<Div> {
 
+    private boolean visibility;
+
 
     public CardLayout(String book, String url)  {
         // Outer Container: <div class="cardlayout">
@@ -41,5 +43,16 @@ public class CardLayout extends Composite<Div> {
         innerCard.add(img, cardNameDiv);
         getContent().add(innerCard);
 
+    }
+
+    public void ChangeVisibility(boolean condition) {
+            this.visibility = condition;
+            this.setVisible(condition);
+
+
+    }
+
+    public boolean isVisibility() {
+        return visibility;
     }
 }

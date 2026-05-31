@@ -3,18 +3,26 @@ package com.booksmanager.websitebooksmanager.views;
 import com.booksmanager.websitebooksmanager.CloudFlare.CloudflareR2Client;
 import com.booksmanager.websitebooksmanager.Entities.BookInterface;
 import com.booksmanager.websitebooksmanager.Entities.BookType;
+import com.booksmanager.websitebooksmanager.Entities.EpubBook;
+import com.booksmanager.websitebooksmanager.Entities.PdfBook;
 import com.booksmanager.websitebooksmanager.Layout.CardLayout;
 import com.booksmanager.websitebooksmanager.Service.BookService;
+import com.vaadin.flow.component.HasValue;
 import com.vaadin.flow.component.UI;
+import com.vaadin.flow.component.checkbox.CheckboxGroup;
+import com.vaadin.flow.component.checkbox.CheckboxGroupVariant;
 import com.vaadin.flow.component.dependency.StyleSheet;
 import com.vaadin.flow.component.html.Div;
 import com.vaadin.flow.component.orderedlayout.HorizontalLayout;
 import com.vaadin.flow.component.orderedlayout.VerticalLayout;
 import com.vaadin.flow.component.textfield.TextField;
 import com.vaadin.flow.data.value.ValueChangeMode;
+import com.vaadin.flow.dom.Element;
+import com.vaadin.flow.router.QueryParameters;
 import com.vaadin.flow.router.Route;
 import com.vaadin.flow.router.RouteParameters;
 import jakarta.annotation.security.PermitAll;
+import org.antlr.v4.runtime.misc.Triple;
 import org.jsoup.helper.Regex;
 import org.jspecify.annotations.NonNull;
 import software.amazon.awssdk.services.s3.model.S3Object;
@@ -30,11 +38,10 @@ import java.util.stream.Collectors;
 public class BookRoot extends VerticalLayout {
 
     private final CloudflareR2Client cloudflareR2Client;
-
+    Map<CardLayout,BookInterface> searchableList = new HashMap<>();
     private final HorizontalLayout cardHolder = new HorizontalLayout();
-    private final Map<String, CardLayout> cardMap = new HashMap<>();
-    private final BookService bookService;
-
+    CheckboxGroup<BookType> checkboxGroup = new CheckboxGroup<>();
+    TextField field = new TextField();
     private final Pattern BOOK_PATTERN =
             Pattern.compile("(epubs|books)/([^/]+)/");
 
@@ -42,20 +49,18 @@ public class BookRoot extends VerticalLayout {
 
     public BookRoot(CloudflareR2Client cloudflareR2Client, BookService  bookService) {
         this.cloudflareR2Client = cloudflareR2Client;
-        this.bookService = bookService;
 
         setClassName("gallery-page-wrapper");
         cardHolder.setClassName("gallery-island");
-
         List<BookInterface> books = bookService.getAllBooks();
-
+        try{
         books.forEach(book -> {
 
             String imageUrl = "";
 
 
             if(book.getBookType().equals(BookType.EPUB)) {
-                imageUrl = "/api/epubs/" + book.StripFileName() + "/cover";
+                imageUrl = "/api/epubs/" + book.StripFileName() + "/" + ((EpubBook)book).getCoverhref();
             }else if(book.getBookType().equals(BookType.PDF)) {
                 imageUrl = "/api/books/" + book.StripFileName() + "/cover";
             }
@@ -69,7 +74,7 @@ public class BookRoot extends VerticalLayout {
                 card.getElement().addEventListener("click", event -> {
                     UI.getCurrent().navigate(
                             UploadBook.class,
-                            new RouteParameters("BookId", book.StripFileName())
+                            new RouteParameters("BookId", book.getTitle())
                     );
                 });
             }
@@ -82,11 +87,14 @@ public class BookRoot extends VerticalLayout {
                     );
                 });
             }
-
-
+            card.ChangeVisibility(true);
+            searchableList.put(card,book);
             cardHolder.add(card);
 
-        });
+        });} catch (Exception e) {
+            throw new RuntimeException(e);
+        }
+
 
 
         /*
@@ -170,9 +178,21 @@ public class BookRoot extends VerticalLayout {
         }
         */
         // 5. Optional UI elements
-        TextField field = getTextField();
+        HorizontalLayout horizontalLayout = new HorizontalLayout();
+        CheckboxGroup<BookType> checkboxGroup = new CheckboxGroup<>();
+        checkboxGroup.setItems(BookType.PDF, BookType.EPUB);
+        checkboxGroup.addThemeVariants(CheckboxGroupVariant.AURA_HORIZONTAL);
+        checkboxGroup.addValueChangeListener(event -> {
+            applyFilters(
+                    event.getValue(),
+                    field.getValue().toLowerCase()
+            );
+        });
 
-        add(field);
+        horizontalLayout.setWidth("30%");
+        TextField field = getTextField();
+        horizontalLayout.add(field,checkboxGroup);
+        add(horizontalLayout);
         add(cardHolder);
 
 
@@ -181,16 +201,31 @@ public class BookRoot extends VerticalLayout {
 
 
     }
+    private void applyFilters(Set<BookType> selectedTypes,final String nameFilter) {
+
+        searchableList.forEach((card, book) -> {
+            System.out.println(book.getBookType());
+            boolean matchesType =
+                    selectedTypes.isEmpty() ||
+                            selectedTypes.contains(book.getBookType());
+
+            boolean matchesName =
+                    nameFilter.isBlank() ||
+                            book.getTitle().toLowerCase().contains(nameFilter);
+
+            card.ChangeVisibility(matchesType && matchesName);
+        });
+    }
     private @NonNull TextField getTextField() {
-        TextField field = new TextField();
         field.setValueChangeMode(ValueChangeMode.TIMEOUT);
         field.setValueChangeTimeout(300);
         field.setClassName("card-gallery-search-field");
         field.setMaxHeight("30px");
         field.addValueChangeListener(event -> {
-            cardMap.forEach((key, card) -> {
-                card.setVisible(key.toLowerCase().contains(field.getValue().toLowerCase()));
-            });
+            applyFilters(
+                    checkboxGroup.getValue(),
+                    event.getValue().toLowerCase()
+            );
         });
         return field;
     }

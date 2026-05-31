@@ -1,7 +1,10 @@
 package com.booksmanager.websitebooksmanager.epub;
 
 import com.booksmanager.websitebooksmanager.CloudFlare.CloudflareR2Client;
+import com.booksmanager.websitebooksmanager.Entities.BookType;
+import com.booksmanager.websitebooksmanager.Entities.EpubBook;
 import com.booksmanager.websitebooksmanager.Layout.ProgressBarLabel;
+import com.booksmanager.websitebooksmanager.Service.EpubService;
 import com.booksmanager.websitebooksmanager.utilities.Utility;
 import com.vaadin.flow.component.UI;
 import com.vaadin.flow.server.streams.UploadMetadata;
@@ -26,9 +29,11 @@ public class UnZipEpub {
 
 
     private static CloudflareR2Client cloudflareR2Client;
-
-    public UnZipEpub( CloudflareR2Client cloudflareR2Client) {
+    private static EpubService epubService;
+    private static EpubBook epubBook = new EpubBook();
+    public UnZipEpub(CloudflareR2Client cloudflareR2Client, EpubService  epubService) {
         UnZipEpub.cloudflareR2Client = cloudflareR2Client;
+        UnZipEpub.epubService = epubService;
     }
 
     public static void unzip(ProgressBarLabel pb, UploadMetadata metadata, File file, UI ui) throws IOException, Exception {
@@ -86,8 +91,17 @@ public class UnZipEpub {
 
 
 
+        String baseName = metadata.fileName().replace(" ","-");
 
+        int dot = baseName.lastIndexOf('.');
+        if (dot != -1) {
+            baseName = baseName.substring(0, dot);
+        }
+        epubBook.setBookType(BookType.EPUB);
+        epubBook.setTitle(baseName);
+        epubBook.setR2Key("epubs/"+baseName);
 
+        epubService.saveEpub(epubBook);
 
     }
 
@@ -162,9 +176,9 @@ public class UnZipEpub {
                 System.out.println("Cover href not found in manifest");
                 return;
             }
-
             // 6. Resolve actual file path
             Path coverSource = opfPath.getParent().resolve(coverHref);
+            epubBook.setCoverhref(destDir.relativize(coverSource).toString().replace("\\","/"));
             Path coverTarget = destDir.resolve("cover.jpg");
 
             // 7. Copy cover into root

@@ -4,6 +4,7 @@ import com.booksmanager.websitebooksmanager.views.LoginView;
 import com.vaadin.flow.spring.security.VaadinSecurityConfigurer;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
+import org.springframework.core.annotation.Order;
 import org.springframework.security.config.annotation.method.configuration.EnableMethodSecurity;
 import org.springframework.security.config.annotation.web.builders.HttpSecurity;
 import org.springframework.security.config.annotation.web.configuration.EnableWebSecurity;
@@ -22,24 +23,31 @@ public class SecurityConfig {
 
     @Bean
     public SecurityFilterChain securityFilterChain(HttpSecurity http) throws Exception {
-        http.with(VaadinSecurityConfigurer.vaadin(), configurer -> configurer.loginView(LoginView.class));
-        http.authorizeHttpRequests(auth -> auth.requestMatchers(
-                "/VAADIN/**",
-                "/frontend/**",
-                "/icons/**",
-                "/images/**",
-                "/*.css",
-                "/*.js",
-                "/book.jpg",
-                "/api/**"
-        ).permitAll());
-        http
-                // Keep your existing security configurations here (auth, login, etc.)
-                .headers(headers -> headers
-                        .frameOptions(frameOptions -> frameOptions.sameOrigin()) // <-- Change from DENY to SAMEORIGIN
-                );
+
+        http.with(VaadinSecurityConfigurer.vaadin(), configurer ->
+                configurer.loginView(LoginView.class)
+        );
+
+        http.authorizeHttpRequests(auth -> auth
+                .requestMatchers(
+                        "/VAADIN/**",
+                        "/frontend/**",
+                        "/icons/**",
+                        "/images/**",
+                        "/*.css",
+                        "/*.js"
+                ).permitAll()
+                .requestMatchers("/api/**").authenticated()
+
+        );
+
+        http.headers(headers ->
+                headers.frameOptions(frame -> frame.sameOrigin())
+        );
+
         return http.build();
     }
+
 
     @Bean
     public UserDetailsService userDetailsService() {

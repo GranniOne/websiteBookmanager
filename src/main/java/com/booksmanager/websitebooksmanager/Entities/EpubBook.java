@@ -13,9 +13,20 @@ public class EpubBook implements BookInterface{
 
     private String title;
     private String r2Key;
-
+    private BookType bookType;
+    private String Coverhref;
     private int chapterCount;
     private String language;
+
+    public EpubBook(String title, String r2Key, BookType bookType) {
+        this.title = title;
+        this.r2Key = r2Key;
+        this.bookType = bookType;
+    }
+
+    public EpubBook() {
+
+    }
 
     @Override
     public String getTitle() {
@@ -29,12 +40,56 @@ public class EpubBook implements BookInterface{
 
     @Override
     public BookType getBookType() {
-        return null;
+        return bookType;
     }
 
     @Override
     public String StripFileName() {
-        return "";
+        return title;
+    }
+
+    public Long getId() {
+        return id;
+    }
+
+    public void setId(Long id) {
+        this.id = id;
+    }
+
+    public void setTitle(String title) {
+        this.title = title;
+    }
+
+    public void setR2Key(String r2Key) {
+        this.r2Key = r2Key;
+    }
+
+    public void setBookType(BookType bookType) {
+        this.bookType = bookType;
+    }
+
+    public String getCoverhref() {
+        return Coverhref;
+    }
+
+    public void setCoverhref(String coverhref) {
+        Coverhref = coverhref;
+    }
+
+    public int getChapterCount() {
+        return chapterCount;
+    }
+
+    public void setChapterCount(int chapterCount) {
+        this.chapterCount = chapterCount;
+    }
+
+    public String getLanguage() {
+        return language;
+    }
+
+    public void setLanguage(String language) {
+        this.language = language;
     }
 
     @Override
