@@ -50,7 +50,7 @@ public class HomeView extends Div {
         // Force the view to fill the browser window
         setSizeFull();
         addClassName("home-page-wrapper");
-
+        this.getStyle().set("overflow", "hidden");
         VerticalLayout welcomeIsland = new VerticalLayout();
         welcomeIsland.addClassName("home-island-container");
         welcomeIsland.addClassName("home-island");
@@ -84,7 +84,7 @@ public class HomeView extends Div {
     }
     private @NonNull Upload getUpload(Button uploadBtn) {
         ProgressBarLabel pb = new ProgressBarLabel("");
-        pb.setVisible(true);
+        pb.setVisible(false);
 
         add(pb);
 
@@ -95,7 +95,7 @@ public class HomeView extends Div {
         // We use a 1-element array so we can 'reset' it inside whenStart if needed
         final long[] startTime = {0L};
         FileUploadCallback successHandler = (metadata, file) -> {
-
+            pb.setVisible(true);
 
 
             if(metadata.contentType().equals("application/pdf")){
@@ -178,7 +178,7 @@ public class HomeView extends Div {
 
                 },bytesPerSecondLimit / 50)
                 .whenComplete((context,success) -> {
-                    Notification notification = success ? createSubmitSuccess(context.fileName()) : createReportError("Failed to generate report!");
+                    Notification notification = success ? createSubmitSuccess("Upload successful, processing Pdf file...") : createReportError("Failed to generate report!");
                     notification.open();
 
 
@@ -230,7 +230,7 @@ public class HomeView extends Div {
         Button viewBtn = new Button("View");
         Button closeButton = new CloseButton();
         HorizontalLayout layout = new HorizontalLayout(icon,
-                new Text(fileName + " submitted!"));
+                new Text(fileName));
         layout.addToEnd(viewBtn, closeButton);
         layout.setAlignItems(FlexComponent.Alignment.CENTER);
         layout.setMinWidth("350px");
@@ -287,16 +287,14 @@ public class HomeView extends Div {
                 cloudflareR2Client.putObject(bucket, folderKey + "cover.jpg", thumbnail);
             }
 
-            // 5. SESSION HANDOFF: Store the map so the next view can edit it
             ui.access(() -> {
-                VaadinSession.getCurrent().setAttribute("pendingMetadata", metadataMap);
-
+                Notification notification = createSubmitSuccess(metadata.fileName() + ": file successfully uploaded!");
+                notification.open();
                 pb.getProgressBar().setIndeterminate(false);
-                //ui.navigate(UploadBook.class);
+                pb.setVisible(false);
             });
-            pb.getProgressBar().setIndeterminate(false);
-            // 6. FINISH: Navigate to the editor
-            //getUI().ifPresent(ui -> ui.navigate(UploadBook.class));
+
+
         }catch (Exception e) {
             ui.access(() -> {
                 pb.getProgressBar().setIndeterminate(false);

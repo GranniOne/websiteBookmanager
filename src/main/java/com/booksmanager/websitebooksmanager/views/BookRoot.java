@@ -16,11 +16,14 @@ import com.vaadin.flow.component.html.Div;
 import com.vaadin.flow.component.orderedlayout.HorizontalLayout;
 import com.vaadin.flow.component.orderedlayout.VerticalLayout;
 import com.vaadin.flow.component.textfield.TextField;
+import com.vaadin.flow.component.textfield.TextFieldVariant;
 import com.vaadin.flow.data.value.ValueChangeMode;
 import com.vaadin.flow.dom.Element;
+import com.vaadin.flow.dom.Style;
 import com.vaadin.flow.router.QueryParameters;
 import com.vaadin.flow.router.Route;
 import com.vaadin.flow.router.RouteParameters;
+import com.vaadin.flow.theme.lumo.Lumo;
 import jakarta.annotation.security.PermitAll;
 import org.antlr.v4.runtime.misc.Triple;
 import org.jsoup.helper.Regex;
@@ -60,7 +63,11 @@ public class BookRoot extends VerticalLayout {
 
 
             if(book.getBookType().equals(BookType.EPUB)) {
-                imageUrl = "/api/epubs/" + book.StripFileName() + "/" + ((EpubBook)book).getCoverhref();
+                if(((EpubBook)book).getCoverhref() != null){
+                    imageUrl = "/api/epubs/" + book.StripFileName() + "/" + ((EpubBook)book).getCoverhref();
+                }else{
+                    imageUrl = "/images/placeholder BookCover.jpg";
+                }
             }else if(book.getBookType().equals(BookType.PDF)) {
                 imageUrl = "/api/books/" + book.StripFileName() + "/cover";
             }
@@ -179,6 +186,7 @@ public class BookRoot extends VerticalLayout {
         */
         // 5. Optional UI elements
         HorizontalLayout horizontalLayout = new HorizontalLayout();
+        horizontalLayout.setClassName("gallery-page-filtering-layout");
         CheckboxGroup<BookType> checkboxGroup = new CheckboxGroup<>();
         checkboxGroup.setItems(BookType.PDF, BookType.EPUB);
         checkboxGroup.addThemeVariants(CheckboxGroupVariant.AURA_HORIZONTAL);
@@ -188,6 +196,7 @@ public class BookRoot extends VerticalLayout {
                     field.getValue().toLowerCase()
             );
         });
+        checkboxGroup.getStyle().setMinWidth("145px");
 
         horizontalLayout.setWidth("30%");
         TextField field = getTextField();
@@ -221,6 +230,9 @@ public class BookRoot extends VerticalLayout {
         field.setValueChangeTimeout(300);
         field.setClassName("card-gallery-search-field");
         field.setMaxHeight("30px");
+        field.setMaxWidth("720px");
+        field.getStyle().setDisplay(Style.Display.CONTENTS);
+
         field.addValueChangeListener(event -> {
             applyFilters(
                     checkboxGroup.getValue(),

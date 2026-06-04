@@ -5,17 +5,32 @@ html, body {
     height: 100vh;
     background-color: #080808; /* Fallback black */
 }
+vaadin-app-layout::part(navbar) {
+    background-color: var(--lumo-contrast-90pct);
+    overflow: hidden;
+}
 
+/* Optional: If you want to make sure any text inside is readable */
+vaadin-app-layout h1,
+vaadin-app-layout vaadin-router-link {
+    color: var(--lumo-base-color) !important;
+}
+
+/* The Full Screen Container */
 /* The Full Screen Container */
 .home-page-wrapper {
     background: radial-gradient(circle at center, #1e1e1e 0%, #121212 70%, #080808 100%) !important;
-    min-height: 100vh;
+
+    /* FIX: Subtract the exact navbar height variable so it scales to the remaining space */
+    height: calc(100vh - var(0px, 56px));
+
     width: 100%;
     display: flex;
     justify-content: center;
     flex-direction: column;
     align-items: center;
     margin: 0;
+    box-sizing: border-box; /* Ensures padding doesn't distort the calculation */
 }
 
 /* The Glassmorphism Island */

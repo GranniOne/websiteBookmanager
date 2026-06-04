@@ -17,7 +17,7 @@ import org.springframework.security.core.userdetails.UserDetails;
 import java.util.Objects;
 
 
-@Route("login")
+@Route(autoLayout = false,value = "login")
 @StyleSheet("LoginStyle.css")
 @StyleSheet(Lumo.STYLESHEET)
 @AnonymousAllowed
