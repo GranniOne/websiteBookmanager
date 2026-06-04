@@ -20,7 +20,6 @@ public class Utility {
 
     public static String determineMimeType(String path) {
         if (path == null) return "application/octet-stream";
-        FileReader
         // We only care about the extension. 
         // This handles cases where a filename might contain a dot in the middle
         int lastDot = path.lastIndexOf('.');
