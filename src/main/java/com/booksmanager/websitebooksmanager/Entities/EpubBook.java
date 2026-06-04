@@ -33,7 +33,7 @@ public class EpubBook implements BookInterface{
         return title;
     }
 
-    @Override
+
     public String getR2Key() {
         return r2Key;
     }
@@ -102,4 +102,5 @@ public class EpubBook implements BookInterface{
                 ", language='" + language + '\'' +
                 '}';
     }
+
 }

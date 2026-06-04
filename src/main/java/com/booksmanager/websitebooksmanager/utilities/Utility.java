@@ -4,6 +4,8 @@ import com.booksmanager.websitebooksmanager.pdf.CloudStorageService;
 import com.booksmanager.websitebooksmanager.CloudFlare.CloudflareR2Client;
 import org.springframework.stereotype.Service;
 
+import java.io.FileReader;
+
 @Service
 public class Utility {
 
@@ -18,7 +20,7 @@ public class Utility {
 
     public static String determineMimeType(String path) {
         if (path == null) return "application/octet-stream";
-
+        FileReader
         // We only care about the extension. 
         // This handles cases where a filename might contain a dot in the middle
         int lastDot = path.lastIndexOf('.');

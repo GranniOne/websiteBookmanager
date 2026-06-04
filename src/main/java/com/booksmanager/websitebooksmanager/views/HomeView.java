@@ -291,7 +291,6 @@ public class HomeView extends Div {
             ui.access(() -> {
                 VaadinSession.getCurrent().setAttribute("pendingMetadata", metadataMap);
 
-
                 pb.getProgressBar().setIndeterminate(false);
                 //ui.navigate(UploadBook.class);
             });
