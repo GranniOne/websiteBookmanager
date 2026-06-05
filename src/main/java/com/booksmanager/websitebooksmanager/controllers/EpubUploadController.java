@@ -40,6 +40,8 @@ public class EpubUploadController {
         // This yields exactly: "epubs/book-of-vaadin-vaadin7/OEBPS/bk01-toc.html"
         // Or for images: "epubs/book-of-vaadin-vaadin7/OEBPS/img/addons/cval-pro-licenses-3.png"
         String r2ObjectKey = "epubs/" + bookKey + "/" + relativeFilePath;
+        System.out.println(fullPath);
+        System.out.println(r2ObjectKey);
 
         try {
             // 4. Retrieve the live byte stream from your existing client bean

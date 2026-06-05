@@ -30,7 +30,7 @@ public class EpubNcx {
 
             nav.add(new EpubPage(i, order, title, fullPath));
         }
-
+        System.out.println("parseNcxDocument: " + nav);
         // Ensure the table of contents is in the correct reading order
         nav.sort(Comparator.comparingInt(EpubPage::getPlayOrder));
         return nav;

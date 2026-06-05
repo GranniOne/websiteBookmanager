@@ -178,10 +178,7 @@ public class HomeView extends Div {
 
                 },bytesPerSecondLimit / 50)
                 .whenComplete((context,success) -> {
-                    Notification notification = success ? createSubmitSuccess("Upload successful, processing Pdf file...") : createReportError("Failed to generate report!");
-                    notification.open();
-
-
+                    Notification.show(success ? "Successfully uploaded " : "failed to upload " + context.fileName(),5000, Notification.Position.TOP_CENTER).addThemeVariants(NotificationVariant.LUMO_SUCCESS);
                 });
 
 
@@ -221,7 +218,7 @@ public class HomeView extends Div {
         btn.addClassName("btn-" + theme);
         return btn;
     }
-    public Notification createSubmitSuccess(String fileName) {
+    public static Notification createSubmitSuccess(String fileName) {
         Notification notification = new Notification();
         notification.addThemeVariants(NotificationVariant.SUCCESS);
 
@@ -242,7 +239,7 @@ public class HomeView extends Div {
 
         return notification;
     }
-    public Notification createReportError(String errorMessage) {
+    public static Notification createReportError(String errorMessage) {
         Notification notification = new Notification();
         notification.addThemeVariants(NotificationVariant.ERROR);
 
@@ -303,7 +300,7 @@ public class HomeView extends Div {
         }
     }
 
-    public class CloseButton extends Button {
+    public static class CloseButton extends Button {
         public CloseButton() {
             super(new Icon("lumo", "cross"));
             setAriaLabel("Close");

@@ -66,7 +66,7 @@ public class BookRoot extends VerticalLayout {
 
             if(book.getBookType().equals(BookType.EPUB)) {
                 if(((EpubBook)book).getCoverhref() != null){
-                    imageUrl = "/api/epubs/" + book.StripFileName() + "/" + ((EpubBook)book).getCoverhref();
+                    imageUrl = "/api/cover/" + book.StripFileName() + "/" + ((EpubBook)book).getCoverhref();
                 }else{
                     imageUrl = "/images/placeholder BookCover.jpg";
                 }

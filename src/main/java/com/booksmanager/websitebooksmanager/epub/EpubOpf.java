@@ -11,7 +11,7 @@ public class EpubOpf {
                 .getAttribute("full-path");
     }
 
-    public String findNcxPath(Document opfDoc) {
+    public String findNcxPath(Document opfDoc)  {
         NodeList items = opfDoc.getElementsByTagName("item");
         for (int i = 0; i < items.getLength(); i++) {
             Element item = (Element) items.item(i);
@@ -21,5 +21,4 @@ public class EpubOpf {
         }
         return null;
     }
-
 }

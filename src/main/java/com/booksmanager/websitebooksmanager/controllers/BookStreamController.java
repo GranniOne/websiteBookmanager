@@ -21,14 +21,14 @@ public class BookStreamController {
         this.cloudflareR2Client = cloudflareR2Client;
     }
 
-    @GetMapping("/api/epubs/**")
+    @GetMapping("/api/cover/**")
     public void getCover(HttpServletRequest request,
                          HttpServletResponse response) throws IOException {
-
+        System.out.println("getCover");
         String fullPath = request.getRequestURI();
 
         // remove "/api/epubs/"
-        String relativePath = fullPath.substring("/api/epubs/".length());
+        String relativePath = fullPath.substring("/api/cover/".length());
 
         String key = "epubs/" + relativePath;
 

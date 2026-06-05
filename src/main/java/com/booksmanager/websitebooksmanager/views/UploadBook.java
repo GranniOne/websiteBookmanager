@@ -60,7 +60,7 @@ public class UploadBook extends VerticalLayout implements HasUrlParameter<String
             // Fetch the data using your new dedicated tools
             cachedSpinePages = epubHandler.getTableOfContents();
 
-            // ... grid.setItems(cachedSpinePages) ...
+            System.out.println("epubHandler.cachedSpinePages = " + cachedSpinePages);
         } catch (Exception e) {
             log.error("Failed to initialize book handler", e);
         }

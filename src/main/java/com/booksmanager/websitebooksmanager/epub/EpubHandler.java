@@ -6,10 +6,13 @@ import org.apache.commons.io.IOUtils;
 import org.w3c.dom.Document;
 import org.w3c.dom.Element;
 import org.w3c.dom.NodeList;
+import org.xml.sax.SAXException;
 
 import javax.xml.parsers.DocumentBuilder;
 import javax.xml.parsers.DocumentBuilderFactory;
+import javax.xml.parsers.ParserConfigurationException;
 import java.io.ByteArrayInputStream;
+import java.io.IOException;
 import java.io.InputStream;
 import java.nio.charset.StandardCharsets;
 import java.util.ArrayList;
@@ -50,13 +53,18 @@ public class EpubHandler {
     // Now uses the internal state, making the API cleaner for your View
     public List<EpubPage> getTableOfContents() throws Exception {
         if (opfDoc == null) throw new IllegalStateException("Initialize handler first!");
+        String ncxPath;
 
-        String ncxPath = epubOpf.findNcxPath(opfDoc);
-        if (ncxPath == null) return Collections.emptyList();
 
-        try (var stream = client.getObjectFromR2(basePrefix + opfParent + ncxPath)) {
-            return epubNcx.parseNcxDocument(parseXmlSecurely(stream), basePrefix, opfParent);
+        ncxPath = epubOpf.findNcxPath(opfDoc);
+        if (ncxPath != null) {
+            try (var stream = client.getObjectFromR2(basePrefix + opfParent + ncxPath)) {
+                return epubNcx.parseNcxDocument(parseXmlSecurely(stream), basePrefix, opfParent);
+            }
+        }else{
+            return EpubSpine.getSpine(opfDoc, basePrefix, opfParent);
         }
+
     }
 
     /**

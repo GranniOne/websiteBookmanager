@@ -6,7 +6,10 @@ import com.booksmanager.websitebooksmanager.Entities.EpubBook;
 import com.booksmanager.websitebooksmanager.Layout.ProgressBarLabel;
 import com.booksmanager.websitebooksmanager.Service.EpubService;
 import com.booksmanager.websitebooksmanager.utilities.Utility;
+import com.booksmanager.websitebooksmanager.views.HomeView;
 import com.vaadin.flow.component.UI;
+import com.vaadin.flow.component.notification.Notification;
+import com.vaadin.flow.component.notification.NotificationVariant;
 import com.vaadin.flow.server.streams.UploadMetadata;
 import org.springframework.stereotype.Service;
 import org.w3c.dom.Document;
@@ -39,10 +42,13 @@ public class UnZipEpub {
         UnZipEpub.epubService = epubService;
     }
 
-    public static void unzip(ProgressBarLabel pb, UploadMetadata metadata, File file, UI ui) throws IOException, Exception {
+    public static void unzip(ProgressBarLabel pb, UploadMetadata metadata, File file, UI ui) throws Exception {
         File destDir = Files.createTempDirectory(metadata.fileName()).toFile();
         System.out.println("Creating temporary directory: " + destDir.getAbsolutePath());
-
+        ui.access(() -> {
+            pb.getProgressBar().setIndeterminate(true);
+            pb.getProgressBarLabelText().setText("processing Epub...");
+        });
         byte[] buffer = new byte[1024];
 
         // Use try-with-resources to ensure streams close automatically if an error occurs
@@ -79,13 +85,13 @@ public class UnZipEpub {
             throw new RuntimeException(e);
         }
 
-        extractCover(destDir.toPath());
+        extractCover(destDir.toPath(),ui,pb);
 
 
 
         Files.walk(destDir.toPath()).filter(Files::isRegularFile).parallel().forEach(files -> {
+            ui.access(() -> pb.getProgressBarLabelText().setText("Extracting files please wait " + destDir.toPath().relativize(files)));
             try {
-
                 upload(files,destDir,metadata);
             } catch (IOException e) {
                 throw new RuntimeException(e);
@@ -103,15 +109,20 @@ public class UnZipEpub {
         epubBook.setBookType(BookType.EPUB);
         epubBook.setTitle(baseName);
         epubBook.setR2Key("epubs/"+baseName);
-
         epubService.saveEpub(epubBook);
+        ui.access(() -> {
+            pb.setVisible(false);
+            Notification notification = HomeView.createSubmitSuccess(metadata.fileName() + ": file successfully uploaded!");
+            notification.open();
 
+        });
     }
 
 
 
 
-    public static void extractCover(Path destDir) {
+    public static void extractCover(Path destDir, UI ui, ProgressBarLabel pb) {
+        ui.access(() -> pb.getProgressBarLabelText().setText("extracting cover from epub"));
         try {
             DocumentBuilderFactory factory = DocumentBuilderFactory.newInstance();
             DocumentBuilder builder = factory.newDocumentBuilder();
@@ -140,7 +151,7 @@ public class UnZipEpub {
             String coverPath = null;
             NodeList itemList = opfDoc.getElementsByTagName("item");
 
-// === STRATEGY 1: Try EPUB 3 Method First (Pure Manifest Lookup) ===
+            // === STRATEGY 1: Try EPUB 3 Method First (Pure Manifest Lookup) ===
             for (int i = 0; i < itemList.getLength(); i++) {
                 Element item = (Element) itemList.item(i);
                 // EPUB 3 marks the cover item directly using the properties attribute
@@ -151,7 +162,7 @@ public class UnZipEpub {
                 }
             }
 
-// === STRATEGY 2: Fallback to EPUB 2 Method (Metadata -> Manifest Link) ===
+            // === STRATEGY 2: Fallback to EPUB 2 Method (Metadata -> Manifest Link) ===
             if (coverPath == null) {
                 String targetCoverId = null;
                 NodeList metaList = opfDoc.getElementsByTagName("meta");
@@ -188,13 +199,13 @@ public class UnZipEpub {
             // 6. Resolve actual file path
             Path coverSource = opfPath.getParent().resolve(coverPath);
             epubBook.setCoverhref(destDir.relativize(coverSource).toString().replace("\\","/"));
-            Path coverTarget = destDir.resolve("cover.jpg");
+            //Path coverTarget = destDir.resolve("cover.jpg");
 
             // 7. Copy cover into root
-            Files.copy(coverSource, coverTarget);
+           // Files.copy(coverSource, coverTarget);
 
-            System.out.println("Cover extracted: " + coverTarget);
-
+            //System.out.println("Cover extracted: " + coverTarget);
+            ui.access(() -> pb.getProgressBarLabelText().setText("cover extracted from epub"));
         } catch (Exception e) {
             e.printStackTrace();
         }
