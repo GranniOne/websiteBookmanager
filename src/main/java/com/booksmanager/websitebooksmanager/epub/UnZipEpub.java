@@ -11,6 +11,7 @@ import com.vaadin.flow.server.streams.UploadMetadata;
 import org.springframework.stereotype.Service;
 import org.w3c.dom.Document;
 import org.w3c.dom.Element;
+import org.w3c.dom.Node;
 import org.w3c.dom.NodeList;
 
 import javax.xml.parsers.DocumentBuilder;
@@ -21,6 +22,8 @@ import java.io.FileOutputStream;
 import java.io.IOException;
 import java.nio.file.Files;
 import java.nio.file.Path;
+import java.util.ArrayList;
+import java.util.List;
 import java.util.zip.ZipEntry;
 import java.util.zip.ZipInputStream;
 
@@ -134,50 +137,56 @@ public class UnZipEpub {
             Document opfDoc = builder.parse(opfPath.toFile());
             opfDoc.getDocumentElement().normalize();
 
-            // 4. Extract cover id (meta property="cover" or name="cover")
-            String coverId = null;
-
-            NodeList metaList = opfDoc.getElementsByTagName("meta");
-            for (int i = 0; i < metaList.getLength(); i++) {
-                Element meta = (Element) metaList.item(i);
-
-                // EPUB3 style: property="cover"
-                if ("cover".equals(meta.getAttribute("property"))) {
-                    coverId = meta.getAttribute("content");
-                    break;
-                }
-
-                // EPUB2 style: name="cover"
-                if ("cover".equals(meta.getAttribute("name"))) {
-                    coverId = meta.getAttribute("content");
-                    break;
-                }
-            }
-
-            if (coverId == null) {
-                System.out.println("No cover found in OPF");
-                return;
-            }
-
-            // 5. Build manifest map (id -> href)
+            String coverPath = null;
             NodeList itemList = opfDoc.getElementsByTagName("item");
-            String coverHref = null;
 
+// === STRATEGY 1: Try EPUB 3 Method First (Pure Manifest Lookup) ===
             for (int i = 0; i < itemList.getLength(); i++) {
                 Element item = (Element) itemList.item(i);
-
-                if (coverId.equals(item.getAttribute("id"))) {
-                    coverHref = item.getAttribute("href");
+                // EPUB 3 marks the cover item directly using the properties attribute
+                if ("cover-image".equals(item.getAttribute("properties"))) {
+                    coverPath = item.getAttribute("href");
+                    System.out.println("Found EPUB 3 Cover: " + coverPath);
                     break;
                 }
             }
 
-            if (coverHref == null) {
-                System.out.println("Cover href not found in manifest");
-                return;
+// === STRATEGY 2: Fallback to EPUB 2 Method (Metadata -> Manifest Link) ===
+            if (coverPath == null) {
+                String targetCoverId = null;
+                NodeList metaList = opfDoc.getElementsByTagName("meta");
+
+                // Find the ID pointer in the metadata block
+                for (int i = 0; i < metaList.getLength(); i++) {
+                    Element meta = (Element) metaList.item(i);
+                    if ("cover".equals(meta.getAttribute("name"))) {
+                        targetCoverId = meta.getAttribute("content");
+                        break;
+                    }
+                }
+
+                // If an EPUB 2 ID pointer was found, locate its matching href in the manifest
+                if (targetCoverId != null && !targetCoverId.isEmpty()) {
+                    for (int i = 0; i < itemList.getLength(); i++) {
+                        Element item = (Element) itemList.item(i);
+                        if (targetCoverId.equals(item.getAttribute("id"))) {
+                            coverPath = item.getAttribute("href");
+                            System.out.println("Found EPUB 2 Cover via ID: " + coverPath);
+                            break;
+                        }
+                    }
+                }
             }
+
+            // Final check
+            if(coverPath != null) {
+                // Process your coverPath here
+            } else {
+                System.out.println("No cover image found in this EPUB.");
+            }
+
             // 6. Resolve actual file path
-            Path coverSource = opfPath.getParent().resolve(coverHref);
+            Path coverSource = opfPath.getParent().resolve(coverPath);
             epubBook.setCoverhref(destDir.relativize(coverSource).toString().replace("\\","/"));
             Path coverTarget = destDir.resolve("cover.jpg");
 
