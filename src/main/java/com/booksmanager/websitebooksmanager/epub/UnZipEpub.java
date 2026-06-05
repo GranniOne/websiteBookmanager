@@ -27,6 +27,7 @@ import java.nio.file.Files;
 import java.nio.file.Path;
 import java.util.ArrayList;
 import java.util.List;
+import java.util.function.Consumer;
 import java.util.zip.ZipEntry;
 import java.util.zip.ZipInputStream;
 
@@ -34,21 +35,19 @@ import java.util.zip.ZipInputStream;
 public class UnZipEpub {
 
 
-    private static CloudflareR2Client cloudflareR2Client;
-    private static EpubService epubService;
-    private static EpubBook epubBook = new EpubBook();
+    private final CloudflareR2Client cloudflareR2Client;
+    private final  EpubService epubService;
+
     public UnZipEpub(CloudflareR2Client cloudflareR2Client, EpubService  epubService) {
-        UnZipEpub.cloudflareR2Client = cloudflareR2Client;
-        UnZipEpub.epubService = epubService;
+        this.cloudflareR2Client = cloudflareR2Client;
+        this.epubService = epubService;
     }
 
-    public static void unzip(ProgressBarLabel pb, UploadMetadata metadata, File file, UI ui) throws Exception {
+    public void unzip(UploadMetadata metadata, File file, Consumer<String> progressListener) throws Exception {
         File destDir = Files.createTempDirectory(metadata.fileName()).toFile();
         System.out.println("Creating temporary directory: " + destDir.getAbsolutePath());
-        ui.access(() -> {
-            pb.getProgressBar().setIndeterminate(true);
-            pb.getProgressBarLabelText().setText("processing Epub...");
-        });
+        EpubBook epubBook = new EpubBook();
+        progressListener.accept("Processing Epub...");
         byte[] buffer = new byte[1024];
 
         // Use try-with-resources to ensure streams close automatically if an error occurs
@@ -85,18 +84,39 @@ public class UnZipEpub {
             throw new RuntimeException(e);
         }
 
-        extractCover(destDir.toPath(),ui,pb);
+        progressListener.accept("Extracting cover from epub");
+        extractCover(destDir.toPath(),epubBook);
 
+        long totalFiles;
+        // 1. Instantly count the files sequentially (takes ~2ms)
+        try (var stream = Files.walk(destDir.toPath())) {
+            totalFiles = stream.filter(Files::isRegularFile).count();
+        }
 
+        java.util.concurrent.atomic.AtomicInteger fileCounter = new java.util.concurrent.atomic.AtomicInteger(0);
 
-        Files.walk(destDir.toPath()).filter(Files::isRegularFile).parallel().forEach(files -> {
-            ui.access(() -> pb.getProgressBarLabelText().setText("Extracting files please wait " + destDir.toPath().relativize(files)));
-            try {
-                upload(files,destDir,metadata);
-            } catch (IOException e) {
-                throw new RuntimeException(e);
-            }
-        });
+        // 2. Run the heavy network uploads in parallel
+        try (var stream = Files.walk(destDir.toPath())) {
+            stream.filter(Files::isRegularFile)
+                    .parallel()
+                    .forEach(currentFile -> {
+                        try {
+                            upload(currentFile, destDir, metadata);
+
+                            int processedCount = fileCounter.incrementAndGet();
+
+                            // Safe UI update frequency
+                            if (processedCount % 5 == 0 || processedCount == totalFiles) {
+                                progressListener.accept(String.format("Uploading: file %d of %d...", processedCount, totalFiles));
+                            }
+                        } catch (IOException e) {
+                            throw new RuntimeException(e);
+                        }
+                    });
+        }
+
+        // Final update when done
+        progressListener.accept("All files uploaded successfully!");
 
 
 
@@ -110,19 +130,18 @@ public class UnZipEpub {
         epubBook.setTitle(baseName);
         epubBook.setR2Key("epubs/"+baseName);
         epubService.saveEpub(epubBook);
-        ui.access(() -> {
-            pb.setVisible(false);
-            Notification notification = HomeView.createSubmitSuccess(metadata.fileName() + ": file successfully uploaded!");
-            notification.open();
 
-        });
+
+           // Notification notification = HomeView.createSubmitSuccess(metadata.fileName() + ": file successfully uploaded!");
+            //notification.open();
+
+
     }
 
 
 
 
-    public static void extractCover(Path destDir, UI ui, ProgressBarLabel pb) {
-        ui.access(() -> pb.getProgressBarLabelText().setText("extracting cover from epub"));
+    public void extractCover(Path destDir,EpubBook epubBook) {
         try {
             DocumentBuilderFactory factory = DocumentBuilderFactory.newInstance();
             DocumentBuilder builder = factory.newDocumentBuilder();
@@ -162,57 +181,54 @@ public class UnZipEpub {
                 }
             }
 
-            // === STRATEGY 2: Fallback to EPUB 2 Method (Metadata -> Manifest Link) ===
+            // === STRATEGY 2: Fallback to EPUB 2 Method (Metadata -> Manifest Link or Direct Path) ===
             if (coverPath == null) {
-                String targetCoverId = null;
+                String metaContent = null;
                 NodeList metaList = opfDoc.getElementsByTagName("meta");
 
-                // Find the ID pointer in the metadata block
+                // Find the metadata block named "cover"
                 for (int i = 0; i < metaList.getLength(); i++) {
                     Element meta = (Element) metaList.item(i);
                     if ("cover".equals(meta.getAttribute("name"))) {
-                        targetCoverId = meta.getAttribute("content");
+                        metaContent = meta.getAttribute("content");
                         break;
                     }
                 }
 
-                // If an EPUB 2 ID pointer was found, locate its matching href in the manifest
-                if (targetCoverId != null && !targetCoverId.isEmpty()) {
-                    for (int i = 0; i < itemList.getLength(); i++) {
-                        Element item = (Element) itemList.item(i);
-                        if (targetCoverId.equals(item.getAttribute("id"))) {
-                            coverPath = item.getAttribute("href");
-                            System.out.println("Found EPUB 2 Cover via ID: " + coverPath);
-                            break;
+                if (metaContent != null && !metaContent.isEmpty()) {
+                    // DETECTOR TRAP: If it contains a file extension or path slash, it's a direct path!
+                    if (metaContent.contains(".") || metaContent.contains("/")) {
+                        coverPath = metaContent;
+                        System.out.println("Found Direct Path Cover in metadata: " + coverPath);
+                    } else {
+                        // Otherwise, treat it normally as an ID pointing to the manifest
+                        for (int i = 0; i < itemList.getLength(); i++) {
+                            Element item = (Element) itemList.item(i);
+                            if (metaContent.equals(item.getAttribute("id"))) {
+                                coverPath = item.getAttribute("href");
+                                System.out.println("Found EPUB 2 Cover via ID pointer: " + coverPath);
+                                break;
+                            }
                         }
                     }
                 }
             }
 
-            // Final check
-            if(coverPath != null) {
-                // Process your coverPath here
+            // 6. Resolve actual file path safely
+            if (coverPath != null) {
+                Path coverSource = opfPath.getParent().resolve(coverPath);
+                epubBook.setCoverhref(destDir.relativize(coverSource).toString().replace("\\", "/"));
             } else {
                 System.out.println("No cover image found in this EPUB.");
             }
 
-            // 6. Resolve actual file path
-            Path coverSource = opfPath.getParent().resolve(coverPath);
-            epubBook.setCoverhref(destDir.relativize(coverSource).toString().replace("\\","/"));
-            //Path coverTarget = destDir.resolve("cover.jpg");
-
-            // 7. Copy cover into root
-           // Files.copy(coverSource, coverTarget);
-
-            //System.out.println("Cover extracted: " + coverTarget);
-            ui.access(() -> pb.getProgressBarLabelText().setText("cover extracted from epub"));
         } catch (Exception e) {
             e.printStackTrace();
         }
     }
 
 
-    private static void upload(Path path, File destDir, UploadMetadata metadata) throws IOException {
+    private void upload(Path path, File destDir, UploadMetadata metadata) throws IOException {
 
         Path relativePath = destDir.toPath().relativize(path);
 
@@ -226,8 +242,6 @@ public class UnZipEpub {
                 relativePath.toString().replace('\\', '/');
 
         String contentType = Utility.determineMimeType(path.toString());
-
-
 
         cloudflareR2Client.putObject(
                 "bookmanager",

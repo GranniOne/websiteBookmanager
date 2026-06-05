@@ -37,16 +37,16 @@ import java.util.concurrent.CompletableFuture;
 @StyleSheet("styles.css")
 @Route("")
 public class HomeView extends Div {
-
+    final UnZipEpub unZipEpub;
     final CloudStorageService cloudStorageService;
     final CloudflareR2Client  cloudflareR2Client;
     final PdfService pdfService;
 
-    public HomeView(CloudStorageService  cloudStorageService, CloudflareR2Client  cloudflareR2Client, PdfService pdfService) {
+    public HomeView(CloudStorageService  cloudStorageService, CloudflareR2Client  cloudflareR2Client, PdfService pdfService, UnZipEpub  unZipEpub) {
         this.cloudStorageService = cloudStorageService;
         this.cloudflareR2Client = cloudflareR2Client;
         this.pdfService = pdfService;
-
+        this.unZipEpub = unZipEpub;
         // Force the view to fill the browser window
         setSizeFull();
         addClassName("home-page-wrapper");
@@ -117,13 +117,33 @@ public class HomeView extends Div {
                 System.out.println("Archiving to cloud...");
 
                 UI ui = UI.getCurrent();
-
+                pb.getProgressBar().setIndeterminate(true);
 
                 CompletableFuture.runAsync(() -> {
                     try {
-                        UnZipEpub.unzip(pb, metadata, file, ui);
+                        unZipEpub.unzip(metadata, file, statusMessage -> {
+                            // The service sends text; the UI handles the component updates safely
+                            ui.access(() -> {
+                                if (ui.isAttached()) {
+                                    pb.getProgressBarLabelText().setText(statusMessage);
+                                }
+                            });
+                        });
+
+                        // Success Handling back on the UI thread
+                        ui.access(() -> {
+                            if (ui.isAttached()) {
+                                pb.setVisible(false);
+                                Notification notification = HomeView.createSubmitSuccess(metadata.fileName() + ": file successfully uploaded!");
+                                notification.open();
+                            }
+                        });
+
                     } catch (Exception e) {
-                        throw new RuntimeException(e);
+                        ui.access(() -> {
+                            Notification.show("Upload failed: " + e.getMessage(), 5000, Notification.Position.MIDDLE)
+                                    .addThemeVariants(NotificationVariant.LUMO_ERROR);
+                        });
                     }
                 });
             } else{
