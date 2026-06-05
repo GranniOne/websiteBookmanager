@@ -43,6 +43,7 @@ public class BookRoot extends VerticalLayout {
     private final CloudflareR2Client cloudflareR2Client;
     Map<CardLayout,BookInterface> searchableList = new HashMap<>();
     private final HorizontalLayout cardHolder = new HorizontalLayout();
+    VerticalLayout mainLayout = new VerticalLayout();
     CheckboxGroup<BookType> checkboxGroup = new CheckboxGroup<>();
     TextField field = new TextField();
     private final Pattern BOOK_PATTERN =
@@ -55,6 +56,7 @@ public class BookRoot extends VerticalLayout {
 
         setClassName("gallery-page-wrapper");
         cardHolder.setClassName("gallery-island");
+        mainLayout.setClassName("gallery-island-main-layout");
         List<BookInterface> books = bookService.getAllBooks();
         try{
         books.forEach(book -> {
@@ -197,12 +199,11 @@ public class BookRoot extends VerticalLayout {
             );
         });
         checkboxGroup.getStyle().setMinWidth("145px");
-
-        horizontalLayout.setWidth("30%");
         TextField field = getTextField();
+
         horizontalLayout.add(field,checkboxGroup);
-        add(horizontalLayout);
-        add(cardHolder);
+        mainLayout.add(horizontalLayout,cardHolder);
+        add(mainLayout);
 
 
 
@@ -229,10 +230,6 @@ public class BookRoot extends VerticalLayout {
         field.setValueChangeMode(ValueChangeMode.TIMEOUT);
         field.setValueChangeTimeout(300);
         field.setClassName("card-gallery-search-field");
-        field.setMaxHeight("30px");
-        field.setMaxWidth("720px");
-        field.getStyle().setDisplay(Style.Display.CONTENTS);
-
         field.addValueChangeListener(event -> {
             applyFilters(
                     checkboxGroup.getValue(),

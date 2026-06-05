@@ -18,38 +18,70 @@
     flex-direction: row !important;
     align-items: center !important;
     justify-content: center !important; /* Centers the whole cluster */
-    width: 100%;
     gap: 1.5rem; /* Breathing room between search and checkboxes */
     box-sizing: border-box;
     padding: 0 20px;
+    width: 100%;
+}
+.gallery-page-filtering-layout-container{
+
 }
 
+/* 2. Responsive Breakpoint (Flips to a column on smaller screens) */
 /* 2. Responsive Breakpoint (Flips to a column on smaller screens) */
 @media (max-width: 768px) {
     .gallery-page-filtering-layout {
         flex-direction: column !important;
-        align-items: stretch !important; /* Makes search bar fill the width */
-        gap: 1rem !important;
+        align-items: center !important; /* Switch parent alignment to center */
+        gap: 1.25rem !important;
+        width: 100% !important;
+        padding: 0 16px !important;
+        box-sizing: border-box;
     }
 
-    /* Keeps your checkboxes centered underneath the stretched search bar */
-    .gallery-page-filtering-layout .v-checkbox-group,
-    .gallery-page-filtering-layout vaadin-checkbox {
-        align-self: center !important;
+    /* Force the search input component to take up the full available width */
+    .gallery-page-filtering-layout > vaadin-text-field,
+    .gallery-page-filtering-layout > .v-text-field {
+        width: 100% !important;
+        max-width: 100% !important;
+    }
+
+    /* Target the container holding the checkboxes to make sure it centers its children */
+    .gallery-page-filtering-layout > vaadin-horizontal-layout,
+    .gallery-page-filtering-layout > div {
+        display: flex !important;
+        justify-content: center !important;
+        align-items: center !important;
+        width: 100% !important;
+        gap: 1.5rem !important; /* Ensures space between PDF and EPUB text */
     }
 }
+.gallery-island-main-layout{
+    max-width: 1600px;
+    display: flex;
+    align-items: center;
+}
+
 .gallery-island {
     background: rgba(27, 27, 27, 0.95);
     backdrop-filter: blur(10px);
     display: grid;
-    /* This makes sure it stays a grid and doesn't turn into a flexbox from the home styles */
-    grid-template-columns: repeat(auto-fill, minmax(250px, 1fr));
-
-    gap: 25px;
-    padding: 40px !important; /* Specific padding for grid */
-    width: 90%;
+    grid-template-columns: repeat(auto-fill, minmax(min(100%, 250px), 1fr));
+    gap: 20px; /* Dropped slightly from 25px for better mobile spacing */
     max-width: 1600px;
-    border-radius: 30px;
+
+    /* 📱 Fluid defaults optimized for Mobile */
+    width: 95%;              /* Takes up more screen width on tiny viewports */
+    padding: 16px !important; /* Drastically lower padding so content doesn't choke */
+    border-radius: 16px;     /* Subtler corners fit smaller screens naturally */
+
+    /* 💻 Enhanced defaults optimized for Desktop / Tablet */
+    @media (min-width: 768px) {
+        width: 90%;
+        padding: 40px !important; /* Restores the deep padding on big screens */
+        border-radius: 30px;     /* Restores the premium rounded island look */
+        gap: 25px;
+    }
 }
 
 /* 3. The Re-Imagined Cards */
@@ -104,8 +136,43 @@
     color: #efefef; /* Slightly brighter text */
     min-height: 2.8em;
 }
+/* 1. The Main Outer Component Wrapper */
 .card-gallery-search-field {
     width: 70%;
-    padding-bottom: 30px;
+    max-width: 720px;
 
+    /* Smooth transitions for interactive focus states */
+    transition: transform 0.2s ease, box-shadow 0.2s ease;
+
+    /* ⚪ FIX: Forces the typed characters to render as solid white */
+    --vaadin-input-field-value-color: #ffffff !important;
+
+    /* Optional: Controls the color of the placeholder text before typing */
+    --vaadin-input-field-placeholder-color: #8b949e !important;
+}
+
+/* 2. Target the Inner Element Field Slot (Vaadin Shadow DOM) */
+.card-gallery-search-field::part(input-field) {
+    background-color: #0d1117 !important; /* Rich deep slate-black, nicer than pure black */
+    border: 1px solid #30363d !important; /* Clean, subtle border when resting */
+    border-radius: 12px !important;       /* Clean rounded corners inside the wrapper */
+    padding: 4px 12px !important;         /* Perfectly balances text inside without clipping */
+    box-shadow: inset 0 1px 3px rgba(0, 0, 0, 0.5); /* Subtle depth shadow inside */
+
+    transition: border-color 0.25s ease, box-shadow 0.25s ease;
+}
+
+/* 3. The Interactive Focus State (When a user clicks into the search bar) */
+.card-gallery-search-field[focused]::part(input-field) {
+    border-color: #58a6ff !important; /* Elegant neon-blue focal border */
+
+    /* A softer, ambient outer glow rather than a rigid thick outline box */
+    box-shadow: 0 0 0 4px rgba(88, 166, 255, 0.15),
+    inset 0 1px 2px rgba(0, 0, 0, 0.5) !important;
+}
+
+/* 4. Target the Typed Text Color inside the field */
+.card-gallery-search-field::part(value) {
+    color: var(--lumo-base-color) !important; /* Crisp white text */
+    font-size: 1rem;
 }

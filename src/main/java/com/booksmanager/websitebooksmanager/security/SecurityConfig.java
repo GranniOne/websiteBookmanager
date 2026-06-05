@@ -27,10 +27,12 @@ public class SecurityConfig {
     @Bean
     public SecurityFilterChain securityFilterChain(HttpSecurity http) throws Exception {
 
+        // 1. Let Vaadin inject its view config securely
         http.with(VaadinSecurityConfigurer.vaadin(), configurer ->
                 configurer.loginView(LoginView.class)
         );
 
+        // 2. Map structural assets explicitly
         http.authorizeHttpRequests(auth -> auth
                 .requestMatchers(
                         "/VAADIN/**",
@@ -42,6 +44,9 @@ public class SecurityConfig {
                 ).permitAll()
                 .requestMatchers("/api/**").authenticated()
 
+                // FIX: Using "/**" instead of anyRequest() keeps the builder open
+                // and allows Vaadin's custom configuration to merge without crashing!
+                .requestMatchers("/**").permitAll()
         );
 
         http.headers(headers ->

@@ -1,8 +1,10 @@
 package com.booksmanager.websitebooksmanager.listeners;
 
 import com.booksmanager.websitebooksmanager.CloudFlare.CloudflareR2Client;
+import com.booksmanager.websitebooksmanager.security.CustomErrorHandler;
 import com.vaadin.flow.server.ServiceInitEvent;
 import com.vaadin.flow.server.VaadinServiceInitListener;
+import com.vaadin.flow.server.VaadinSession;
 import org.slf4j.LoggerFactory;
 import org.springframework.stereotype.Component;
 
@@ -34,7 +36,7 @@ public class ApplicationServiceInitListener implements VaadinServiceInitListener
 
         event.getSource().addSessionInitListener(sessionInitEvent -> {
             LoggerFactory.getLogger(getClass()).info("A new Session has been initialized! " + "ip: " + sessionInitEvent.getSession().getBrowser().getAddress() + " Browser:  " + sessionInitEvent.getSession().getBrowser().getUserAgent());
-
+            VaadinSession.getCurrent().setErrorHandler(new CustomErrorHandler());
 
         });
     }
