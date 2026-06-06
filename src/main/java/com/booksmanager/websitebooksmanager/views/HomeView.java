@@ -203,7 +203,7 @@ public class HomeView extends Div {
 
 
         Upload upload = new Upload(temporaryFileHandler);
-        /*
+
         upload.addAttachListener(event -> {
             upload.getElement().executeJs("""
         requestAnimationFrame(() => {
@@ -216,7 +216,7 @@ public class HomeView extends Div {
     """);
         });
 
-         */
+
 
 
         upload.setAcceptedFileTypes("application/pdf", ".pdf","application/epub+zip", ".epub");

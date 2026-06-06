@@ -65,8 +65,8 @@ public class BookRoot extends VerticalLayout {
 
 
             if(book.getBookType().equals(BookType.EPUB)) {
-                if(((EpubBook)book).getCoverhref() != null){
-                    imageUrl = "/api/cover/" + book.StripFileName() + "/" + ((EpubBook)book).getCoverhref();
+                if(((EpubBook)book).getCoverHref() != null){
+                    imageUrl = "/api/cover/" + book.StripFileName() + "/" + ((EpubBook)book).getCoverHref();
                 }else{
                     imageUrl = "/images/placeholder BookCover.jpg";
                 }
@@ -75,7 +75,11 @@ public class BookRoot extends VerticalLayout {
             }
 
 
-            CardLayout card = new CardLayout(book.StripFileName(), imageUrl);
+            CardLayout card = new CardLayout(book instanceof EpubBook
+                    ? ((EpubBook)book).getOfficialTitle() != null
+                            ? ((EpubBook)book).getOfficialTitle()
+                            : book.StripFileName()
+                    : book.StripFileName() , imageUrl);
 
 
             if(book.getBookType().equals(BookType.EPUB)) {

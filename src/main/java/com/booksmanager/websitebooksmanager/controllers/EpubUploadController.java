@@ -12,6 +12,8 @@ import software.amazon.awssdk.services.s3.model.NoSuchKeyException;
 
 import java.io.File;
 import java.io.IOException;
+import java.net.URLDecoder;
+import java.nio.charset.StandardCharsets;
 
 @RestController
 @RequestMapping("/api/epub")
@@ -33,8 +35,10 @@ public class EpubUploadController {
         // 1. Snatch the whole request path (e.g., "/api/epub/book-of-vaadin-vaadin7/OEBPS/bk01-toc.html")
         String fullPath = (String) request.getAttribute(HandlerMapping.PATH_WITHIN_HANDLER_MAPPING_ATTRIBUTE);
 
-        // 2. Isolate the relative path after the bookKey (yields: "OEBPS/bk01-toc.html")
-        String relativeFilePath = fullPath.substring(fullPath.indexOf(bookKey) + bookKey.length() + 1);
+        String decodedFullPath = URLDecoder.decode(fullPath, StandardCharsets.UTF_8);
+        String decodedBookKey = URLDecoder.decode(bookKey, StandardCharsets.UTF_8);
+
+        String relativeFilePath = decodedFullPath.substring(decodedFullPath.indexOf(decodedBookKey) + decodedBookKey.length() + 1);
 
         // 3. Prepend the "epubs/" directory path prefix required by your bucket setup
         // This yields exactly: "epubs/book-of-vaadin-vaadin7/OEBPS/bk01-toc.html"

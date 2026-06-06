@@ -10,6 +10,8 @@ import org.springframework.web.bind.annotation.*;
 
 import java.io.IOException;
 import java.io.InputStream;
+import java.net.URLDecoder;
+import java.nio.charset.StandardCharsets;
 
 @RestController
 @PreAuthorize("isAuthenticated()")
@@ -27,8 +29,10 @@ public class BookStreamController {
         System.out.println("getCover");
         String fullPath = request.getRequestURI();
 
+        String decodedFullPath = URLDecoder.decode(fullPath, StandardCharsets.UTF_8);
+
         // remove "/api/epubs/"
-        String relativePath = fullPath.substring("/api/cover/".length());
+        String relativePath = decodedFullPath.substring("/api/cover/".length());
 
         String key = "epubs/" + relativePath;
 
