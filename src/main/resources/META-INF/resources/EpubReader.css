@@ -1,64 +1,12 @@
-/* --- Root View Grid Layout Configuration --- */
-.reader-main-layout {
-    display: grid !important;
-    padding: 0 !important;
-    margin: 0 !important;
-    gap: 0 !important;
-    width: 100vw;
-    height: calc(100vh - 56px);
-    /* Rows: Toolbar takes natural height, bottom row takes all remaining space */
-    grid-template-rows: auto 1fr;
-
-    /* Columns: 280px sidebar, 1fr fluid viewport, 280px invisible counter-balance */
-    grid-template-columns: 280px 1fr 280px;
-}
-
-/* Force the top controls menu to stretch horizontally across all three tracks */
-.reader-top-toolbar {
-    grid-row: 1;
-    grid-column: 1 / span 3;
-    background-color: #111214;
-    border-bottom: 1px solid #2e3035;
-    z-index: 10;
-}
-
-/* Place the chapter selector grid in the lower left corner cell */
+/* Sidebar rules matching your dark scheme */
 vaadin-grid.epub-reader-sidebar {
-    grid-row: 2;
-    grid-column: 1;
     background-color: #1e1f22;
     border: none;
-    height: 100% !important;
-
-    /* Forces baseline cells to stay transparent natively */
     --vaadin-grid-cell-background: transparent;
     --vaadin-grid-row-background-color: transparent;
 }
 
-/* Place the reading pane wrapper in the center column cell */
-.reader-frame-viewport {
-    grid-row: 2;
-    grid-column: 2; /* Sits perfectly in the middle track */
-    width: 100%;
-    height: 100%;
-    padding: 32px 0; /* Gives your iframe breathing room from top/bottom bars */
-    box-sizing: border-box;
-}
-
-/* Style the iframe element directly inside its viewport */
-iframe {
-    background-color: #ffffff !important;
-    background: #ffffff !important;
-    color-scheme: light !important;
-    box-shadow: 0 12px 40px rgba(0, 0, 0, 0.4); /* Elevates the page document visually */
-    border-radius: 6px;
-    border: none;
-}
-
-/* --- Sidebar Components Styling --- */
-
-/* Style for unselected chapter label spans */
-/* Style for unselected chapter label spans */
+/* Text Truncation / Overflow Handling */
 vaadin-grid.epub-reader-sidebar .sidebar-pill {
     padding: 10px 16px;
     margin: 4px 12px;
@@ -67,11 +15,9 @@ vaadin-grid.epub-reader-sidebar .sidebar-pill {
     font-size: 14px;
     font-weight: 400;
     color: #b9bbbe;
-
-    /* --- NEW: Text Overflow & Truncation Handling --- */
-    white-space: nowrap;       /* Prevents text from breaking into multiple lines */
-    overflow: hidden;          /* Hides any text that extends past the width boundary */
-    text-overflow: ellipsis;   /* Adds the elegant trailing dots (...) if text is cut off */
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
 }
 
 .sidebar-pill {
@@ -82,13 +28,67 @@ vaadin-grid::part(selected-row) {
     background-color: #3c4b75;
 }
 
-/* Base style for every row element acting as a menu link */
 vaadin-grid.epub-reader-sidebar::part(row) {
     cursor: pointer;
     transition: background-color 0.15s ease;
 }
 
-/* Hover style handling targets the individual cell part */
 vaadin-grid.epub-reader-sidebar::part(body-cell):hover {
     background-color: #35373c;
+}
+
+/* Optional background style for the right sidebar container */
+.reader-right-sidebar {
+    background-color: transparent; /* Set to #1e1f22 if you want it matching the left sidebar background */
+}
+.reader-frame-viewport {
+    display: flex !important;
+    /* Natively centers the iframe horizontally within the available split-pane space */
+    justify-content: center !important;
+    align-items: center !important;
+    width: 100%;
+    height: 100%;
+    box-sizing: border-box;
+}
+
+iframe {
+    background-color: #ffffff !important;
+    background: #ffffff !important;
+    color-scheme: light !important;
+    box-shadow: 0 12px 40px rgba(0, 0, 0, 0.4);
+    border-radius: 6px;
+    border: none;
+    /* Clean slate: No margin-left rules or hardcoded positions allowed here anymore */
+}
+
+/* Style for the right side SplitLayout panel container cell slot */
+.reader-right-sidebar-drawer {
+    background-color: #0d1219 !important;
+    background: #0d1219 !important;
+    height: 100%;
+    box-sizing: border-box;
+}
+
+/* Stacks the custom combobox selectors neatly and matches the field background */
+.drawer-inner-content {
+    background-color: #0d1219 !important;
+    background: #0d1219 !important;
+    box-sizing: border-box;
+    padding: 32px 24px;
+    display: flex !important;
+    flex-direction: column !important;
+    gap: 20px;
+}
+
+/* Forces the input selectors to adapt responsively */
+.drawer-inner-content vaadin-combo-box {
+    width: 100% !important;
+}
+
+/* --- THE FIX: Target ONLY the field label text directly --- */
+.drawer-inner-content vaadin-combo-box::part(label) {
+    color: #b9bbbe !important;
+}
+.drawer-inner-content vaadin-slider::part(label) {
+    color: #b9bbbe !important;
 }
