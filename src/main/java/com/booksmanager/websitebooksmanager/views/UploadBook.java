@@ -119,36 +119,11 @@ public class UploadBook extends VerticalLayout implements HasUrlParameter<String
             }
         });
 
-        // --- 2. Set Up IFrame Behavior ---
+        // --- 2. Fully Merged Set Up (Zero Layout Shift + Targeted Font Scaling) ---
         String expectedPrefix = "epubs/" + bookKey + "/";
 
-        iframe.getElement().addEventListener("load", e -> {
-            String jsPath = "/api/epub/" + bookKey + "/js/kobo.js";
-            String jsCode =
-                    "var style = document.createElement('style');" +
-                            "style.textContent = `" +
-                            "  :root {" +
-                            "    --reader-font-size: " + readerFontSize + "px;" +
-                            "    --reader-line-height: 1.6;" +
-                            "    --reader-bg-color: " + readerBgColor + ";" +
-                            "    --reader-text-color: " + readerTextColor + ";" +
-                            "  }" +
-                            "  /* Target only the top-level body framework */" +
-                            "  html, body {" +
-                            "    font-size: var(--reader-font-size) !important;" +
-                            "    line-height: var(--reader-line-height) !important;" +
-                            "    background-color: var(--reader-bg-color) !important;" +
-                            "    color: var(--reader-text-color) !important;" +
-                            "  }" +
-                            "  /* Protect responsive structural spacing styles */" +
-                            "  img { max-width: 100% !important; height: auto !important; }" +
-                            "`;" +
-                            "this.contentDocument.head.appendChild(style);";
-
-            iframe.getElement().executeJs(jsCode);
-        });
-
         iframe.addAttachListener(attachEvent -> {
+            // Track internal navigation paths smoothly
             iframe.getElement().executeJs(
                     "const iframe = this; " +
                             "iframe.addEventListener('load', function() { " +
@@ -164,6 +139,59 @@ public class UploadBook extends VerticalLayout implements HasUrlParameter<String
                             "    } " +
                             "});"
             );
+
+            // THE MERGED SOLUTION: High-speed injection using your targeted :root layout strategy
+            iframe.getElement().executeJs(
+                    "const iframe = this;" +
+                            "const injectStyles = () => {" +
+                            "    const doc = iframe.contentDocument;" +
+                            "    if (doc && doc.head) {" +
+                            "        /* 1. Pull the absolute latest reactive states from the host element styles */" +
+                            "        const computed = window.getComputedStyle(iframe);" +
+                            "        const currentFSize = computed.getPropertyValue('--reader-font-size') || '16px';" +
+                            "        const currentBg = computed.getPropertyValue('--reader-bg-color') || '#ffffff';" +
+                            "        const currentText = computed.getPropertyValue('--reader-text-color') || '#111111';" +
+                            "        " +
+                            "        /* 2. Check if our style block already exists */" +
+                            "        let style = doc.getElementById('reader-injected-styles');" +
+                            "        if (!style) {" +
+                            "            style = doc.createElement('style');" +
+                            "            style.id = 'reader-injected-styles';" +
+                            "            doc.head.appendChild(style);" +
+                            "        }" +
+                            "        " +
+                            "        /* 3. Update the stylesheet text dynamically so it responds immediately to sliders */" +
+                            "        style.textContent = `" +
+                            "            :root {" +
+                            "              --reader-font-size: ` + currentFSize + `;" +
+                            "              --reader-line-height: 1.6;" +
+                            "              --reader-bg-color: ` + currentBg + `;" +
+                            "              --reader-text-color: ` + currentText + `;" +
+                            "            }" +
+                            "            html, body {" +
+                            "              font-size: var(--reader-font-size) !important;" +
+                            "              line-height: var(--reader-line-height) !important;" +
+                            "              background-color: var(--reader-bg-color) !important;" +
+                            "              color: var(--reader-text-color) !important;" +
+                            "            }" +
+                            "            img { max-width: 100% !important; height: auto !important; }" +
+                            "        `;" +
+                            "    }" +
+                            "};" +
+                            "setInterval(injectStyles, 30);" // Accelerated polling catches internal link clicks before page paint
+            );
+        });
+
+        // Handle the background pagination engine scripts exactly as before on load completion
+        iframe.getElement().addEventListener("load", e -> {
+            String jsPath = "/api/epub/" + bookKey + "/js/kobo.js";
+            String paginationScript =
+                    "var s = document.createElement('script');" +
+                            "s.src = '" + jsPath + "';" +
+                            "s.onload = function() { if(typeof paginate === 'function') paginate(); };" +
+                            "this.contentDocument.head.appendChild(s);";
+
+            iframe.getElement().executeJs(paginationScript);
         });
 
         // --- 3. Setup Sidebar Content Navigation (Grid) ---
